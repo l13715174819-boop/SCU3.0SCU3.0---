@@ -1,0 +1,60 @@
+{
+  "name": "medical",
+  "description": "医疗健康领域 — 症状/疾病/医院/药品信息提取",
+  "version": "1.0",
+  "keywords": {
+    "trigger": ["症状", "疾病", "医院", "医生", "科室", "挂号", "药品", "副作用", "治疗", "诊断", "检查", "怎么办", "不舒服"],
+    "enhance": ["简介", "口碑", "等级"],
+    "negative": ["酒店", "住宿", "多少钱"]
+  },
+  "query_rewrite": {
+    "suffix": " 医疗 健康 简介",
+    "max_original_tokens": 30
+  },
+  "source_whitelist": [
+    "dxy.cn",
+    "dxy.com",
+    "guahao.com",
+    "haodf.com",
+    "familydoctor.com.cn",
+    "120ask.com",
+    "xywy.com",
+    "nhc.gov.cn",
+    "medlive.cn",
+    "yiigle.com"
+  ],
+  "field_schema": {
+    "hospital_name": {
+      "patterns": [
+        "([\\u4e00-\\u9fa5]{2,20}(?:医院|医学院|中心医院|人民医院))",
+        "<title[^>]*>([^|<]+?)\\s*(?:[|｜-]|\\s)\\s*(?:医院|挂号)"
+      ],
+      "type": "text"
+    },
+    "level": {
+      "patterns": [
+        "(三甲|三乙|二甲|二乙|一级|二级|三级)",
+        "等级[:：\\s]*(三甲|三乙|二甲|二乙|一级|二级|三级)"
+      ],
+      "type": "text"
+    },
+    "department": {
+      "patterns": [
+        "科室[:：\\s]*([^<\\n]{2,20})",
+        "([\\u4e00-\\u9fa5]{2,10}科)"
+      ],
+      "type": "text"
+    },
+    "address": {
+      "patterns": [
+        "地址[:：\\s]*([^<\\n]{5,80})",
+        "院址[:：\\s]*([^<\\n]{5,80})"
+      ],
+      "type": "text"
+    }
+  },
+  "ranking_strategy": {
+    "boost_whitelist_source": 2.5,
+    "boost_has_level": 1.5
+  }
+}

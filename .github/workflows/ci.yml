@@ -1,0 +1,42 @@
+# CI/CD 配置 - SCU2 自动化测试流水线
+# 阶段1测试框架配置
+
+name: SCU2 CI
+
+on:
+  push:
+    paths: ['scu2/**']
+  pull_request:
+    paths: ['scu2/**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn
+
+      - name: D层完整性校验
+        working-directory: scu2
+        run: python -c "import sys; sys.path.insert(0,'.'); from guard.d_layer_integrity import verify_on_startup; ok,msg=verify_on_startup(); exit(0 if ok else 1)"
+
+      - name: A4依赖关系扫描
+        working-directory: scu2
+        run: python tools/dependency_scanner.py .
+
+      - name: 单元测试
+        working-directory: scu2
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: 性能测试
+        working-directory: scu2
+        run: python -m unittest tests.test_performance -v

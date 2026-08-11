@@ -1,0 +1,19 @@
+{
+  "name": "general",
+  "description": "通用兜底领域 — 无领域匹配时使用，纯摘要+深度爬取",
+  "version": "1.0",
+  "keywords": {
+    "trigger": [],
+    "enhance": []
+  },
+  "query_rewrite": {
+    "suffix": "",
+    "max_original_tokens": 50
+  },
+  "source_whitelist": [],
+  "field_schema": {},
+  "ranking_strategy": {
+    "boost_whitelist_source": 1.0,
+    "boost_has_price": 1.0
+  }
+}

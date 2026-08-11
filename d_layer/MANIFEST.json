@@ -1,0 +1,49 @@
+{
+  "version": "1.1.0",
+  "description": "D层基线文件清单 - 只放代码定义，运行时状态归W1层",
+  "principle": "D层只放代码定义（类结构/公理常量），余额/历史/哈希链等运行时状态在W1层",
+  "allowed_files": [
+    {
+      "path": "axioms.py",
+      "description": "公理与常量定义（A1-A4公理、四契约、层级定义、税率表）",
+      "contains": ["Axiom", "Contract", "VALID_LAYERS", "LAYER_ORDER", "BASE_TAX_RATES", "Operation"]
+    },
+    {
+      "path": "ledger_base.py",
+      "description": "账本抽象基类（只定义接口，不含运行时状态）",
+      "contains": ["LedgerBase", "pay_tax", "refund", "replenish", "balance"]
+    },
+    {
+      "path": "contracts.py",
+      "description": "契约定义（四契约的详细规范）",
+      "contains": ["Contract", "OBSERVATION", "SAMPLING", "SIGNING", "SYNTHESIS"]
+    },
+    {
+      "path": "__init__.py",
+      "description": "D层包初始化",
+      "contains": []
+    }
+  ],
+  "expected_hashes": {
+    "axioms.py": "825f783c5d87f0062f2d81d8e79f7c651f9b66dd7b62341bafc665215146c4a0",
+    "ledger_base.py": "c0b1878c4c3e213bbc6cc5be02779190862cf0c5378b6345f80e73bdf52cdc2f",
+    "contracts.py": "3dc846e8bfc5845b0c788a2627a6ad44fd3e7e2393c25051db1715276c227837",
+    "__init__.py": "9f154fe55729be7127aba8069f55bf334ee27dcd728aafe350e37f9d0e09085a"
+  },
+  "forbidden_in_d_layer": [
+    "运行时余额（_balance）",
+    "历史记录（_history）",
+    "哈希链（_hash_chain）",
+    "税率覆写表（_tax_factor_overrides）",
+    "反馈计数（_feedback_counts）",
+    "线程锁（threading.Lock 实例）",
+    "文件IO操作（open/write）",
+    "网络请求"
+  ],
+  "integrity_check": {
+    "enabled": true,
+    "frequency": "startup_and_hourly",
+    "algorithm": "sha256",
+    "on_failure": "abort_startup_or_readonly_degrade"
+  }
+}
