@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/30942147/README.md)
 # SCU3.0 - 标准计算单元
 
 一个基于阴阳对子思考架构的智能计算单元系统。
