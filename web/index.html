@@ -1290,6 +1290,23 @@
         <!-- 模板快捷区 -->
         <div class="card" style="margin-bottom:16px">
           <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>预置工作流</span>
+            <button class="btn btn-ghost btn-sm" onclick="loadPresets()">刷新</button>
+          </div>
+          <div class="form-label" style="font-size:11px;color:var(--text-light);margin-top:4px">基于 TRAE AI 工作模式抽象，一键触发多Agent协作</div>
+          <div id="presetList" style="margin-top:10px"><div class="empty">点击刷新加载预置工作流</div></div>
+          <div id="presetRunWrap" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft)">
+            <div class="form-label" style="font-size:11px">运行主题</div>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <input class="form-input" id="presetTopicInput" placeholder="输入主题，如：GPT-5、用户登录Bug、Python学习" style="font-size:13px;flex:1">
+              <button class="btn btn-primary btn-sm" id="presetRunBtn" onclick="runPreset()">执行</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 任务模板 -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
             <span>任务模板</span>
             <button class="btn btn-ghost btn-sm" onclick="loadTemplates()">刷新</button>
           </div>
@@ -3631,6 +3648,74 @@ async function loadTemplates(){
     document.getElementById('templateList').innerHTML = `<div class="empty" style="color:var(--danger)">加载失败: ${esc(e.message)}</div>`;
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = '刷新'; }
+  }
+}
+
+// ─── 预置工作流 ──────────────────────────────────
+let _currentPresetId = null;
+
+async function loadPresets(){
+  const btn = event?.target;
+  if(btn){ btn.disabled = true; btn.textContent = '加载中...'; }
+  try{
+    const r = await api('/agent/presets');
+    const list = r.presets || r.data?.presets || [];
+    const el = document.getElementById('presetList');
+    if(!list || list.length === 0){
+      el.innerHTML = '<div class="empty">暂无预置工作流</div>';
+      return;
+    }
+    el.innerHTML = list.map(p => `
+      <div class="orch-template-item" onclick="selectPreset('${esc(p.id)}')" data-preset-id="${esc(p.id)}">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">${p.icon || '🤖'}</span>
+          <div>
+            <div class="orch-template-name">${esc(p.name)}</div>
+            <div class="orch-template-desc">${esc(p.description)}</div>
+          </div>
+        </div>
+        <span style="font-size:18px;color:var(--text-light)">›</span>
+      </div>
+    `).join('');
+  }catch(e){
+    document.getElementById('presetList').innerHTML = `<div class="empty" style="color:var(--danger)">加载失败: ${esc(e.message)}</div>`;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '刷新'; }
+  }
+}
+
+function selectPreset(presetId){
+  _currentPresetId = presetId;
+  document.querySelectorAll('#presetList .orch-template-item').forEach(item => {
+    item.style.borderColor = item.dataset.presetId === presetId ? 'var(--text)' : 'var(--border-soft)';
+    item.style.background = item.dataset.presetId === presetId ? 'var(--bg-soft)' : 'transparent';
+  });
+  document.getElementById('presetRunWrap').style.display = 'block';
+  document.getElementById('presetTopicInput').focus();
+}
+
+async function runPreset(){
+  if(!_currentPresetId){ toast('请先选择一个预置工作流', 'warn'); return; }
+  const topic = document.getElementById('presetTopicInput').value.trim();
+  if(!topic){ toast('请输入主题', 'warn'); return; }
+
+  const btn = document.getElementById('presetRunBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '执行中...'; }
+  document.getElementById('orchResultWrap').style.display = 'block';
+  document.getElementById('orchResult').innerHTML = '<span style="color:var(--text-light)">多Agent协作执行中（可能需要数十秒）...</span>';
+
+  try{
+    const r = await api(`/agent/presets/${_currentPresetId}/run`, {
+      method: 'POST',
+      body: { topic }
+    });
+    _orchCurrentResult = r;
+    _orchCurrentMode = 'multi';
+    renderOrchResult(r, 'multi');
+  }catch(e){
+    document.getElementById('orchResult').innerHTML = `<span style="color:var(--danger)">执行失败: ${esc(e.message)}</span>`;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '执行'; }
   }
 }
 

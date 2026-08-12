@@ -944,6 +944,57 @@ async def agent_execute(req: AgentExecuteRequest, api_key: str = Depends(verify_
     result = executor.execute_plan(req.plan, task_id=req.task_id or None)
     return JSONResponse(result)
 
+# ─── 预置 Agent 工作流 ────────────────────────────────
+@app.get("/agent/presets")
+async def agent_presets_list(api_key: str = Depends(verify_api_key)):
+    """列出预置 Agent 工作流（基于 TRAE AI 工作模式）"""
+    from m_layer.agent_presets import list_presets
+    return JSONResponse({"success": True, "presets": list_presets()})
+
+@app.get("/agent/presets/{preset_id}")
+async def agent_preset_detail(preset_id: str, api_key: str = Depends(verify_api_key)):
+    """获取预置工作流详情"""
+    from m_layer.agent_presets import get_preset
+    p = get_preset(preset_id)
+    if not p:
+        return JSONResponse({"success": False, "error": "预置工作流不存在"}, status_code=404)
+    return JSONResponse({"success": True, "preset": p})
+
+@app.post("/agent/presets/{preset_id}/run")
+async def agent_preset_run(preset_id: str, req: dict, api_key: str = Depends(verify_api_key)):
+    """一键执行预置工作流
+
+    body: {"topic": "用户输入的主题"}
+    内部自动构建 subtasks 并调用 multiagent/execute
+    """
+    from m_layer.agent_presets import build_request
+    from m_layer.multi_agent import quick_multi_agent, quick_mixed_agents
+
+    topic = (req.get("topic") or "").strip()
+    if not topic:
+        return JSONResponse({"success": False, "error": "请输入主题"})
+
+    request_body = build_request(preset_id, topic)
+    if not request_body:
+        return JSONResponse({"success": False, "error": "预置工作流不存在"}, status_code=404)
+
+    subtasks = request_body["subtasks"]
+    has_isolation = any("isolation" in st for st in subtasks)
+
+    try:
+        if has_isolation:
+            result = quick_mixed_agents(subtasks)
+        else:
+            result = quick_multi_agent(subtasks, mode=request_body["mode"])
+        # 附加元信息
+        if isinstance(result, dict):
+            result["preset_id"] = preset_id
+            result["preset_name"] = request_body["goal"]
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"预置工作流执行失败: {e}", exc_info=True)
+        return JSONResponse({"success": False, "error": str(e)})
+
 @app.get("/agent/history")
 async def agent_history(limit: int = 20, api_key: str = Depends(verify_api_key)):
     """Agent执行历史"""
