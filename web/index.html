@@ -3589,6 +3589,35 @@ function renderOrchResult(r, mode){
       <div style="padding:10px;background:var(--bg-soft);border-radius:6px;font-size:12px;line-height:1.6;max-height:300px;overflow-y:auto;white-space:pre-wrap;border-left:2px solid var(--primary)">${esc(finalOutput.substring(0, 2000))}</div></div>`;
   }
 
+  // CUF 审计轨迹
+  const cufTraces = r.cuf_traces || r.data?.cuf_traces;
+  if(cufTraces && cufTraces.length > 0){
+    html += '<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-light);margin-bottom:6px">CUF 审计轨迹</div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    cufTraces.forEach(t => {
+      const passed = t.passed;
+      const badge = passed ? '✓' : '✗';
+      const color = passed ? '#16a34a' : '#dc2626';
+      const bg = passed ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.08)';
+      let label = t.guard || '?';
+      let detail = '';
+      if(t.tax !== undefined){ detail += ` 税${t.tax}`; }
+      if(t.subtask_traces){
+        detail += ` (${t.subtask_traces.length}个子任务)`;
+      }
+      html += `<span style="font-size:11px;padding:3px 8px;border-radius:4px;background:${bg};color:${color};font-weight:500">${badge} ${esc(label)}${esc(detail)}</span>`;
+    });
+    html += '</div></div>';
+  }
+
+  // CUF 拦截信息
+  if(r.cuf_blocked){
+    html = `<div style="margin-bottom:10px;padding:10px;background:rgba(220,38,38,0.06);border-left:2px solid var(--danger);border-radius:0 6px 6px 0">
+      <span style="font-size:12px;font-weight:600;color:var(--danger)">⚠ CUF 守卫拦截</span>
+      <div style="font-size:12px;margin-top:4px;color:var(--text)">${esc(r.error || '')}</div>
+    </div>` + html;
+  }
+
   // 原始JSON（折叠）
   if(r.raw || (!steps.length && !finalOutput)){
     const raw = r.raw || r;

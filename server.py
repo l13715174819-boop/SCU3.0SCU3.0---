@@ -922,26 +922,71 @@ class ToolChainRequest(PydanticModel):
 
 @app.post("/agent/run")
 async def agent_run(req: AgentRunRequest, api_key: str = Depends(verify_api_key)):
-    """完整Agent执行：目标→拆解→执行→反思→清理"""
+    """完整Agent执行：目标→拆解→执行→反思→清理（经 CUF 守卫审批）"""
     from m_layer.task_executor import get_executor
+    from guard.workflow_guard import run_with_cuf_audit
+
     executor = get_executor()
-    result = executor.run(req.goal, cleanup=req.cleanup, reflect=req.reflect)
+    op_id = f"agent_run_{int(time.time())}"
+    # Agent.run 内部由 LLM 拆解，subtasks 在执行前不可预知
+    # 此处用通用 subtask 占位（general），工具守卫按 read 审计
+    placeholder_subtasks = [{"subtask": req.goal, "specialty": "general"}]
+
+    def _execute():
+        return executor.run(req.goal, cleanup=req.cleanup, reflect=req.reflect)
+
+    result = run_with_cuf_audit(
+        guard=guard, tool_guard=tool_guard,
+        op_id=op_id, goal=req.goal,
+        subtasks=placeholder_subtasks, execute_fn=_execute,
+    )
     return JSONResponse(result)
 
 @app.post("/agent/plan")
 async def agent_plan(req: AgentRunRequest, api_key: str = Depends(verify_api_key)):
-    """仅生成执行计划（不执行）"""
+    """仅生成执行计划（不执行，无需守卫②，但仍需守卫①审计入口）"""
     from m_layer.task_executor import get_executor
+    from guard.workflow_guard import audit_workflow_entry
+
     executor = get_executor()
+    op_id = f"agent_plan_{int(time.time())}"
+    ok1, msg1, d1 = audit_workflow_entry(guard, op_id, req.goal)
+    if not ok1:
+        return JSONResponse({"success": False, "error": f"CUF守卫①拦截: {msg1}",
+                             "cuf_blocked": True})
     plan = executor.create_plan(req.goal)
+    if isinstance(plan, dict):
+        plan["cuf_audited"] = True
+        plan["cuf_entry_tax"] = d1.get("tax", 0)
     return JSONResponse(plan)
 
 @app.post("/agent/execute")
 async def agent_execute(req: AgentExecuteRequest, api_key: str = Depends(verify_api_key)):
-    """执行已有计划"""
+    """执行已有计划（经 CUF 守卫审批）"""
     from m_layer.task_executor import get_executor
+    from guard.workflow_guard import run_with_cuf_audit
+
     executor = get_executor()
-    result = executor.execute_plan(req.plan, task_id=req.task_id or None)
+    op_id = f"agent_exec_{int(time.time())}"
+    # 从 plan 中提取步骤作为 subtasks 用于工具守卫审计
+    plan_steps = req.plan.get("steps", []) if isinstance(req.plan, dict) else []
+    subtasks = []
+    for s in plan_steps:
+        subtasks.append({
+            "subtask": s.get("name", s.get("task", "")),
+            "specialty": "general",
+        })
+    if not subtasks:
+        subtasks = [{"subtask": "execute_plan", "specialty": "general"}]
+
+    def _execute():
+        return executor.execute_plan(req.plan, task_id=req.task_id or None)
+
+    result = run_with_cuf_audit(
+        guard=guard, tool_guard=tool_guard,
+        op_id=op_id, goal=req.plan.get("goal", "execute_plan") if isinstance(req.plan, dict) else "execute_plan",
+        subtasks=subtasks, execute_fn=_execute,
+    )
     return JSONResponse(result)
 
 # ─── 预置 Agent 工作流 ────────────────────────────────
@@ -962,13 +1007,16 @@ async def agent_preset_detail(preset_id: str, api_key: str = Depends(verify_api_
 
 @app.post("/agent/presets/{preset_id}/run")
 async def agent_preset_run(preset_id: str, req: dict, api_key: str = Depends(verify_api_key)):
-    """一键执行预置工作流
+    """一键执行预置工作流（经 CUF 守卫审批）
 
     body: {"topic": "用户输入的主题"}
     内部自动构建 subtasks 并调用 multiagent/execute
+
+    审批链路：守卫①(W2→M) → 工具守卫(每子任务) → 执行 → 守卫②(M→W2)
     """
     from m_layer.agent_presets import build_request
     from m_layer.multi_agent import quick_multi_agent, quick_mixed_agents
+    from guard.workflow_guard import run_with_cuf_audit
 
     topic = (req.get("topic") or "").strip()
     if not topic:
@@ -980,20 +1028,24 @@ async def agent_preset_run(preset_id: str, req: dict, api_key: str = Depends(ver
 
     subtasks = request_body["subtasks"]
     has_isolation = any("isolation" in st for st in subtasks)
+    op_id = f"preset_{preset_id}_{int(time.time())}"
 
-    try:
+    def _execute():
         if has_isolation:
             result = quick_mixed_agents(subtasks)
         else:
             result = quick_multi_agent(subtasks, mode=request_body["mode"])
-        # 附加元信息
         if isinstance(result, dict):
             result["preset_id"] = preset_id
             result["preset_name"] = request_body["goal"]
-        return JSONResponse(result)
-    except Exception as e:
-        logger.error(f"预置工作流执行失败: {e}", exc_info=True)
-        return JSONResponse({"success": False, "error": str(e)})
+        return result
+
+    result = run_with_cuf_audit(
+        guard=guard, tool_guard=tool_guard,
+        op_id=op_id, goal=request_body["goal"],
+        subtasks=subtasks, execute_fn=_execute,
+    )
+    return JSONResponse(result)
 
 @app.get("/agent/history")
 async def agent_history(limit: int = 20, api_key: str = Depends(verify_api_key)):
@@ -1280,13 +1332,25 @@ class ParallelExecuteRequest(PydanticModel):
 @app.post("/parallel/execute")
 async def parallel_execute(req: ParallelExecuteRequest,
                             api_key: str = Depends(verify_api_key)):
-    """并行执行计划（无依赖步骤并行）"""
-    try:
+    """并行执行计划（无依赖步骤并行，经 CUF 守卫审批）"""
+    from guard.workflow_guard import run_with_cuf_audit
+
+    op_id = f"parallel_{int(time.time())}"
+    plan_steps = req.plan.get("steps", []) if isinstance(req.plan, dict) else []
+    subtasks = [{"subtask": s.get("name", ""), "specialty": "general"} for s in plan_steps]
+    if not subtasks:
+        subtasks = [{"subtask": "parallel_execute", "specialty": "general"}]
+
+    def _execute():
         from m_layer.parallel_executor import get_parallel_executor
-        result = get_parallel_executor().execute_parallel(req.plan, req.task_id)
-        return JSONResponse(result)
-    except Exception as e:
-        return JSONResponse({"success": False, "error": str(e)})
+        return get_parallel_executor().execute_parallel(req.plan, req.task_id)
+
+    result = run_with_cuf_audit(
+        guard=guard, tool_guard=tool_guard,
+        op_id=op_id, goal=req.plan.get("goal", "parallel_execute") if isinstance(req.plan, dict) else "parallel_execute",
+        subtasks=subtasks, execute_fn=_execute,
+    )
+    return JSONResponse(result)
 
 @app.post("/parallel/analyze")
 async def parallel_analyze(req: ParallelExecuteRequest,
@@ -1325,7 +1389,7 @@ async def branch_evaluate(req: dict, api_key: str = Depends(verify_api_key)):
 # ─── 多Agent端点 ────────────────────────────────
 @app.post("/multiagent/execute")
 async def multiagent_execute(req: dict, api_key: str = Depends(verify_api_key)):
-    """多Agent协作执行（双模式：线程级 / 进程级隔离）
+    """多Agent协作执行（双模式：线程级 / 进程级隔离，经 CUF 守卫审批）
 
     body:
     {
@@ -1340,28 +1404,32 @@ async def multiagent_execute(req: dict, api_key: str = Depends(verify_api_key)):
         ]
     }
 
-    模式说明:
-      thread  - 线程级并行（轻量、共享上下文，适合工具调用密集型任务）
-      process - 进程级隔离（独立上下文、独立 LLM 会话，适合深度探索任务）
-      mixed   - 混合模式（通过每个任务的 isolation 字段指定）
+    审批链路：守卫①(W2→M) → 工具守卫(每子任务) → 执行 → 守卫②(M→W2)
     """
-    try:
-        from m_layer.multi_agent import quick_multi_agent, quick_mixed_agents
+    from m_layer.multi_agent import quick_multi_agent, quick_mixed_agents
+    from guard.workflow_guard import run_with_cuf_audit
 
-        mode = req.get("mode", "thread")
-        subtasks = req.get("subtasks", [])
+    mode = req.get("mode", "thread")
+    subtasks = req.get("subtasks", [])
+    if not subtasks:
+        return JSONResponse({"success": False, "error": "subtasks 不能为空"})
 
-        # 检测混合模式：任意任务指定了 isolation 字段
-        has_isolation_override = any("isolation" in st for st in subtasks)
+    has_isolation_override = any("isolation" in st for st in subtasks)
+    op_id = f"multiagent_{int(time.time())}"
+    goal = req.get("goal", f"多Agent协作({len(subtasks)}个子任务)")
 
+    def _execute():
         if has_isolation_override:
-            result = quick_mixed_agents(subtasks)
+            return quick_mixed_agents(subtasks)
         else:
-            result = quick_multi_agent(subtasks, mode=mode)
+            return quick_multi_agent(subtasks, mode=mode)
 
-        return JSONResponse(result)
-    except Exception as e:
-        return JSONResponse({"success": False, "error": str(e)})
+    result = run_with_cuf_audit(
+        guard=guard, tool_guard=tool_guard,
+        op_id=op_id, goal=goal,
+        subtasks=subtasks, execute_fn=_execute,
+    )
+    return JSONResponse(result)
 
 
 @app.post("/multiagent/thread")
