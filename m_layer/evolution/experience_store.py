@@ -37,6 +37,7 @@ import logging
 import threading
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from core.abc import PersistableMixin, StatusableMixin, SearchableMixin
 
 logger = logging.getLogger("SCU3.m.experience")
 
@@ -45,7 +46,7 @@ DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 EXP_PATH = os.path.join(DATA_DIR, "experiences.json")
 
 
-class ExperienceStore:
+class ExperienceStore(PersistableMixin, StatusableMixin, SearchableMixin):
     """经验存储 — 沉淀成功路径 + 预加载工具
 
     用法：
@@ -69,29 +70,24 @@ class ExperienceStore:
         self._experiences: List[Dict] = []
         self._load()
 
-    # ─── 持久化 ────────────────────────────────────
+    # ─── 持久化（PersistableMixin 接口实现）────────────
 
+    def _state_path(self) -> str:
+        return EXP_PATH
+
+    def _serialize_state(self) -> dict:
+        return {"experiences": self._experiences, "updated_at": datetime.now().isoformat()}
+
+    def _deserialize_state(self, state: dict) -> None:
+        self._experiences = state.get("experiences", [])
+        logger.info(f"经验存储加载: {len(self._experiences)} 条经验")
+
+    # 保留 _load / _save 作为兼容别名（Mixin 的 _load_state/_save_state 是标准入口）
     def _load(self):
-        """从磁盘加载经验"""
-        try:
-            if os.path.exists(EXP_PATH):
-                with open(EXP_PATH, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                self._experiences = data.get("experiences", [])
-                logger.info(f"经验存储加载: {len(self._experiences)} 条经验")
-        except Exception as e:
-            logger.warning(f"加载经验存储失败: {e}")
-            self._experiences = []
+        self._load_state()
 
     def _save(self):
-        """持久化到磁盘"""
-        try:
-            os.makedirs(os.path.dirname(EXP_PATH), exist_ok=True)
-            with open(EXP_PATH, "w", encoding="utf-8") as f:
-                json.dump({"experiences": self._experiences, "updated_at": datetime.now().isoformat()},
-                          f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.warning(f"保存经验存储失败: {e}")
+        self._save_state()
 
     # ─── 经验沉淀 ────────────────────────────────────
 

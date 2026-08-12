@@ -4,50 +4,218 @@ W2 层：w2_layer/perception.py — 感知层
 =======================================
 最外层，直接接收用户输入。属于 CUF W2 层。
 数据流：感知(W2) → 记忆(W1) 需经守卫①跨层审计。
+
+感知流水线：防御 → 验证 → 归一化 → 脱敏 → 语言检测 → 意图识别 → 领域识别 → 写ctx
+W2 是输入侧唯一清洗口，下游 M 层无需重复脱敏（通过 ctx["sanitized"]=True 标记判断）。
 """
 import re
+import unicodedata
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, List
+
+from core.abc import PerceivableMixin, SanitizableMixin
 
 logger = logging.getLogger("SCU3.w2.perception")
 
+# 输入长度上限（超过则截断+告警）
+_MAX_INPUT_LEN = 5000
 
-class PerceptionLayer:
-    """感知层 — 输入解析与意图识别"""
+
+class PerceptionLayer(PerceivableMixin, SanitizableMixin):
+    """感知层 — 输入解析、清洗、脱敏与意图识别
+
+    继承 PerceivableMixin/SanitizableMixin 获得接口契约。
+    W2 是输入进入系统的唯一清洗口：验证→归一化→脱敏→语言→意图→领域。
+    """
 
     def process(self, user_input: str, ctx: Dict[str, Any] = None,
                 history: list = None) -> Dict[str, Any]:
-        """解析用户输入
+        """解析用户输入（感知流水线入口）
 
         Args:
             user_input: 用户输入文本
             ctx: 上下文
             history: 最近对话历史（List[{"role":"user/assistant","content":"..."}]）
                      用于 LLM 语义推理时区分追问 vs 新话题
+
+        流水线顺序：
+            防御 → 验证 → 归一化 → 脱敏 → 语言检测 → 意图识别 → 领域识别 → 写ctx
         """
         ctx = ctx or {}
-        # 防御None/非字符串输入
+        history = history or []
+
+        # ① 防御None/非字符串输入
         if user_input is None:
             user_input = ""
         if not isinstance(user_input, str):
             user_input = str(user_input)
-        text = user_input.strip()
+
+        # ② 输入验证（长度/空输入/截断）
+        validation = self._validate_input(user_input)
+        if not validation["valid"]:
+            ctx.update({"input": "", "perceived": "", "perceived_raw": "",
+                        "intent": "conversation", "domain": "general",
+                        "language": "unknown", "sanitized": False,
+                        "perception_ok": False, "perception_reason": validation["reason"]})
+            return ctx
+        if validation["truncated"]:
+            user_input = user_input[:_MAX_INPUT_LEN]
+            logger.warning(f"输入过长已截断: original_len={validation['original_len']}")
+
+        # ③ 输入归一化（全角半角统一/控制字符清理/空白合并）
+        text = self._normalize_input(user_input)
         ctx["input"] = text
-        ctx["perceived"] = text
-        ctx["intent"] = self._detect_intent(text, history or [])
-        # 领域识别：web_search 意图时进一步识别所属领域（hotel/product/medical/general）
-        # 用于驱动领域插件配置（关键词增强+源白名单+字段解析）
-        ctx["domain"] = "general"
-        if ctx["intent"] == "web_search":
-            try:
-                from domain_router import detect_domain
-                ctx["domain"] = detect_domain(text)
-            except Exception as e:
-                logger.debug(f"领域识别异常（不阻塞）: {e}")
-                ctx["domain"] = "general"
+        ctx["perceived_raw"] = text  # 原始文本（脱敏前，仅供本地日志）
+
+        # ④ PII/敏感信息脱敏（复用 guard.ContentFilter 50+规则）
+        text_sanitized, sanitize_alerts = self.sanitize(text)
+        ctx["perceived"] = text_sanitized  # 脱敏后文本（下游直接消费）
+        ctx["sanitized"] = True
+        ctx["sanitize_alerts"] = sanitize_alerts
+        if sanitize_alerts:
+            logger.info(f"感知层脱敏: {len(sanitize_alerts)} 项命中, alerts={sanitize_alerts[:3]}")
+
+        # ⑤ 语言检测
+        ctx["language"] = self._detect_language(text_sanitized)
+
+        # ⑥ 意图识别
+        ctx["intent"] = self._detect_intent(text_sanitized, history)
+
+        # ⑦ 领域识别（全意图，不再仅限 web_search）
+        ctx["domain"] = self._detect_domain(text_sanitized, ctx["intent"])
+
         ctx["perception_ok"] = True
-        logger.info(f"感知层: intent={ctx['intent']}, domain={ctx.get('domain', 'general')}, input={text[:50]}")
+        logger.info(f"感知层: intent={ctx['intent']}, domain={ctx.get('domain', 'general')}, "
+                     f"lang={ctx['language']}, input={text_sanitized[:50]}")
         return ctx
+
+    def perceive(self, user_input: str, ctx: Dict[str, Any] = None,
+                 history: List[Dict] = None) -> Dict[str, Any]:
+        """PerceivableMixin 契约实现：等价于 process()"""
+        return self.process(user_input, ctx, history)
+
+    # ═══════════════════════════════════════════════════════════
+    #  输入验证
+    # ═══════════════════════════════════════════════════════════
+
+    def _validate_input(self, text: str) -> dict:
+        """输入验证：空输入拒绝、长度上限截断
+
+        Returns:
+            {"valid": bool, "reason": str, "truncated": bool, "original_len": int}
+        """
+        original_len = len(text)
+        if not text or not text.strip():
+            return {"valid": False, "reason": "空输入", "truncated": False, "original_len": 0}
+        if original_len > _MAX_INPUT_LEN:
+            return {"valid": True, "reason": "长度超限已截断", "truncated": True, "original_len": original_len}
+        return {"valid": True, "reason": "", "truncated": False, "original_len": original_len}
+
+    # ═══════════════════════════════════════════════════════════
+    #  输入归一化
+    # ═══════════════════════════════════════════════════════════
+
+    def _normalize_input(self, text: str) -> str:
+        """输入归一化：全角半角统一、控制字符清理、多余空白合并
+
+        从 w1_layer/action.py._smart_search_query 上移的清洗逻辑，
+        消除 W1 对输入归一化的职责持有。
+        """
+        # 控制字符清理（保留换行和制表符）
+        text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+        # 全角空格→半角
+        text = text.replace("\u3000", " ")
+        # 连续空白合并为单个空格
+        text = re.sub(r"[ \t]+", " ", text)
+        # 去除首尾空白
+        text = text.strip()
+        return text
+
+    # ═══════════════════════════════════════════════════════════
+    #  PII/敏感信息脱敏（SanitizableMixin 实现）
+    # ═══════════════════════════════════════════════════════════
+
+    def sanitize(self, text: str) -> Tuple[str, List[str]]:
+        """清洗输入：调用 guard.ContentFilter 做 PII 脱敏
+
+        复用现有 50+ 正则规则（手机号/身份证/API key/密钥/内网IP/银行卡等），
+        不重复造轮子。W2 统一脱敏一次，下游 M 层通过 ctx["sanitized"] 跳过重复脱敏。
+
+        Returns:
+            (脱敏后文本, 命中告警列表)
+        """
+        try:
+            from guard.content_filter import ContentFilter
+            cf = ContentFilter()
+            filtered, alerts = cf.filter(text)
+            return filtered, alerts or []
+        except ImportError:
+            logger.debug("guard.content_filter 不可用，跳过脱敏")
+            return text, []
+        except Exception as e:
+            logger.warning(f"脱敏异常（不阻塞，返回原文）: {e}")
+            return text, []
+
+    def detect_pii(self, text: str) -> List[str]:
+        """仅检测 PII 不替换，返回命中项列表"""
+        try:
+            from guard.content_filter import ContentFilter
+            cf = ContentFilter()
+            _, alerts = cf.filter(text)
+            return alerts or []
+        except Exception as e:
+            logger.debug(f"PII检测异常: {e}")
+            return []
+
+    # ═══════════════════════════════════════════════════════════
+    #  语言检测
+    # ═══════════════════════════════════════════════════════════
+
+    def _detect_language(self, text: str) -> str:
+        """语言检测：基于 CJK 字符占比判断 zh/en/mixed
+
+        简单高效（无需外部库），为后续多语言 prompt 路由、翻译意图提供依据。
+        """
+        if not text:
+            return "unknown"
+        cjk_count = 0
+        ascii_count = 0
+        for ch in text:
+            cp = ord(ch)
+            # CJK 统一表意文字范围
+            if (0x4E00 <= cp <= 0x9FFF) or (0x3400 <= cp <= 0x4DBF) or \
+               (0x20000 <= cp <= 0x2A6DF) or (0x3040 <= cp <= 0x30FF):
+                cjk_count += 1
+            elif ch.isascii() and ch.isalpha():
+                ascii_count += 1
+        total = cjk_count + ascii_count
+        if total == 0:
+            return "unknown"
+        cjk_ratio = cjk_count / total
+        if cjk_ratio > 0.6:
+            return "zh"
+        elif cjk_ratio < 0.2:
+            return "en"
+        return "mixed"
+
+    # ═══════════════════════════════════════════════════════════
+    #  领域识别（全意图解耦）
+    # ═══════════════════════════════════════════════════════════
+
+    def _detect_domain(self, text: str, intent: str) -> str:
+        """领域识别：所有意图都识别（不再仅限 web_search）
+
+        修复：原实现仅在 intent==web_search 时识别领域，导致
+        hotel/medical/product 领域增强在 conversation/knowledge_query
+        等意图下失效。现在全意图识别，由下游层按需消费。
+        """
+        try:
+            from domain_router import detect_domain
+            domain = detect_domain(text)
+            return domain if domain else "general"
+        except Exception as e:
+            logger.debug(f"领域识别异常（不阻塞）: {e}")
+            return "general"
 
     def _detect_intent(self, text: str, history: list = None) -> str:
         """意图识别（含插件市场触发意图、工作流自动触发）"""

@@ -1,0 +1,28 @@
+{
+  "balance": 2700.0,
+  "history": [
+    {
+      "type": "replenish",
+      "amount": 800,
+      "balance_after": 1800.0,
+      "reason": "工作流自动触发测试充值",
+      "timestamp": "2026-08-12T13:11:57.642636",
+      "hash": "a75427a0399e5e287a4be5d00058e6ba6989fb55d8a7e98da5dcb41b4170092e"
+    },
+    {
+      "type": "replenish",
+      "amount": 900,
+      "balance_after": 2700.0,
+      "reason": "工作流自动触发验证-充值",
+      "timestamp": "2026-08-12T13:12:38.086718",
+      "hash": "4f2ca8695fbf8e7c12df8979e12fb5601196b760467798bcbc6db609ef06505a"
+    }
+  ],
+  "hash_chain": "4f2ca8695fbf8e7c12df8979e12fb5601196b760467798bcbc6db609ef06505a",
+  "total_in": 2700.0,
+  "total_out": 0.0,
+  "system_state": "stable",
+  "tax_factor_overrides": {},
+  "feedback_counts": {},
+  "updated_at": "2026-08-12T13:12:38.086718"
+}

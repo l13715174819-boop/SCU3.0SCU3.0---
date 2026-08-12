@@ -21,11 +21,12 @@ import logging
 import threading
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from core.abc import StatusableMixin
 
 logger = logging.getLogger("SCU3.m.conv")
 
 
-class ConversationContext:
+class ConversationContext(StatusableMixin):
     """多轮对话上下文管理器
 
     用法:

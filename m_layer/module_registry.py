@@ -25,6 +25,7 @@ import time
 import logging
 import threading
 from typing import Dict, Any, List, Optional, Callable
+from core.abc import PersistableMixin, StatusableMixin
 
 logger = logging.getLogger("SCU3.m.module_registry")
 
@@ -96,7 +97,7 @@ class ModuleInfo:
         }
 
 
-class ModuleRegistry:
+class ModuleRegistry(PersistableMixin, StatusableMixin):
     """功能模块注册表
 
     用法：
@@ -337,35 +338,24 @@ class ModuleRegistry:
                 "categories": categories,
             }
 
-    # ─── 持久化 ────────────────────────────────────
+    # ─── 持久化（PersistableMixin 接口实现）────────────
 
-    def _save_state(self):
-        """持久化 disabled 状态（loaded 状态不持久化，重启需重新 load）"""
-        try:
-            state = {
-                "modules": {
-                    name: {"disabled": m.disabled}
-                    for name, m in self._modules.items()
-                },
-                "updated_at": time.time(),
-            }
-            with open(STATE_PATH, "w", encoding="utf-8") as f:
-                json.dump(state, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.debug(f"保存注册表状态失败: {e}")
+    def _state_path(self) -> str:
+        return STATE_PATH
 
-    def _load_state(self):
-        """从持久化恢复 disabled 状态"""
-        try:
-            if not os.path.exists(STATE_PATH):
-                return
-            with open(STATE_PATH, "r", encoding="utf-8") as f:
-                state = json.load(f)
-            # 仅记录，等模块 register 后再应用
-            self._pending_state = state.get("modules", {})
-        except Exception as e:
-            logger.debug(f"加载注册表状态失败: {e}")
-            self._pending_state = {}
+    def _serialize_state(self) -> dict:
+        """序列化 disabled 状态（loaded 状态不持久化）"""
+        return {
+            "modules": {
+                name: {"disabled": m.disabled}
+                for name, m in self._modules.items()
+            },
+            "updated_at": time.time(),
+        }
+
+    def _deserialize_state(self, state: dict) -> None:
+        """从持久化恢复 disabled 状态（等模块 register 后再应用）"""
+        self._pending_state = state.get("modules", {})
 
 
 # ─── 全局单例 ────────────────────────────────────

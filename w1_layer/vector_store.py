@@ -27,6 +27,7 @@ import threading
 from typing import List, Dict, Any, Tuple, Optional
 
 from datetime import datetime
+from core.abc import StatusableMixin, SearchableMixin
 
 logger = logging.getLogger("SCU3.w1.vector")
 
@@ -96,7 +97,7 @@ except Exception:
     _HAS_NUMPY = False
 
 
-class VectorKnowledgeStore:
+class VectorKnowledgeStore(StatusableMixin, SearchableMixin):
     """向量数据库知识库 — 多后端降级 + 混合检索
 
     嵌入后端优先级：

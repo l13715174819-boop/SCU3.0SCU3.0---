@@ -621,39 +621,50 @@ class LLMClient:
         messages.append({"role": "user", "content": full_prompt})
 
         start = time.time()
-        try:
-            resp = self._client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
-            latency = time.time() - start
-            content = resp.choices[0].message.content or ""
-            usage = resp.usage
-            tokens = ((usage.prompt_tokens or 0) + (usage.completion_tokens or 0)) if usage else 0
+        # 重试机制：网络抖动/限流时指数退避重试 2 次（1s, 2s）
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                resp = self._client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+                latency = time.time() - start
+                content = resp.choices[0].message.content or ""
+                usage = resp.usage
+                tokens = ((usage.prompt_tokens or 0) + (usage.completion_tokens or 0)) if usage else 0
 
-            with self._lock:
-                self.success_count += 1
-                self.total_tokens += tokens
-                self.total_latency += latency
+                with self._lock:
+                    self.success_count += 1
+                    self.total_tokens += tokens
+                    self.total_latency += latency
 
-            return {
-                "content": content,
-                "model": model,
-                "tokens": tokens,
-                "latency": round(latency, 3),
-                "mode": self.mode,
-                "platform": self.active_platform,
-                "error": None,
-            }
-        except Exception as e:
-            with self._lock:
-                self.fail_count += 1
-            latency = time.time() - start
-            logger.error(f"LLM调用失败({self.active_platform}): {e}")
-            # 降级为规则回复
-            return self._rule_based_reply(prompt, system_prompt, context, error=str(e))
+                return {
+                    "content": content,
+                    "model": model,
+                    "tokens": tokens,
+                    "latency": round(latency, 3),
+                    "mode": self.mode,
+                    "platform": self.active_platform,
+                    "error": None,
+                    "retries": attempt,
+                }
+            except Exception as e:
+                last_err = e
+                if attempt < max_retries:
+                    backoff = 1.0 * (2 ** attempt)  # 1s, 2s
+                    logger.warning(f"LLM调用失败({self.active_platform}), "
+                                  f"第{attempt+1}次重试(等{backoff}s): {e}")
+                    time.sleep(backoff)
+                else:
+                    with self._lock:
+                        self.fail_count += 1
+                    latency = time.time() - start
+                    logger.error(f"LLM调用失败({self.active_platform}), 已重试{max_retries}次仍失败: {e}")
+                    # 降级为规则回复
+                    return self._rule_based_reply(prompt, system_prompt, context, error=str(e))
 
     def _call_local_torch(
         self, prompt, system_prompt, temperature, max_tokens, context,

@@ -1728,27 +1728,10 @@ class ActionLayer:
     # ─── 路径安全 ────────────────────────────────────
 
     def _safe_path(self, path: str, write: bool = False) -> str:
-        """安全路径检查（防目录遍历攻击，M1修复前缀碰撞）"""
-        if os.path.isabs(path):
-            # 绝对路径必须在项目目录内
-            full = os.path.abspath(path)
-        else:
-            # 相对路径基于sandbox目录
-            if write:
-                full = os.path.join(SANDBOX_DIR, path)
-            else:
-                full = os.path.join(SANDBOX_DIR, path)  # C5修复：read也限制sandbox
-            full = os.path.abspath(full)
-        # 防目录遍历（M1修复：使用 os.sep 后缀防止前缀碰撞）
-        if write:
-            allowed_root = SANDBOX_DIR
-        else:
-            allowed_root = SANDBOX_DIR
-        # M1修复：用 commonpath 替代 startswith，防止前缀碰撞
-        try:
-            common = os.path.commonpath([full, allowed_root])
-            if common != allowed_root:
-                raise ValueError(f"路径越界: {path}（限制在 {allowed_root}）")
-        except ValueError:
-            raise ValueError(f"路径越界: {path}（限制在 {allowed_root}）")
-        return full
+        """安全路径检查（防目录遍历攻击，M1修复前缀碰撞）
+
+        委托公共工具 w1_layer/path_utils.py，消除三处重复实现。
+        write 参数保留兼容性（C5修复后 read/write 均限制 sandbox，参数已无实际作用）。
+        """
+        from w1_layer.path_utils import safe_resolve_path_strict
+        return safe_resolve_path_strict(path, SANDBOX_DIR)

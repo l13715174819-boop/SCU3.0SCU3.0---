@@ -29,6 +29,7 @@ import threading
 import urllib.request
 import urllib.error
 from typing import Dict, Any, Optional, List, Callable, Tuple
+from core.abc import PersistableMixin, StatusableMixin
 
 logger = logging.getLogger("SCU3.m.mcp")
 
@@ -817,7 +818,7 @@ MCPServer._METHOD_HANDLERS = {
 
 # ─── MCP注册表 ────────────────────────────────────
 
-class MCPRegistry:
+class MCPRegistry(PersistableMixin, StatusableMixin):
     """MCP注册表
 
     管理多个MCP服务器连接，提供统一工具路由：
@@ -1056,13 +1057,18 @@ class MCPRegistry:
         """获取本地MCPServer实例"""
         return self._server
 
-    # ─── 状态持久化 ────────────────────────────────────
+    # ─── 状态持久化（PersistableMixin 接口实现）────────────
 
-    def _save_state(self) -> None:
-        """持久化状态到 SCU3_data/mcp_state.json"""
+    def _state_path(self) -> str:
+        return STATE_FILE
+
+    def _serialize_state(self) -> dict:
+        """序列化 MCP 状态"""
         state = {
             "remote_servers": [],
-            "tool_routing": {},
+            "tool_routing": {
+                t: loc for t, loc in self._tool_location.items() if loc == "local"
+            },
             "saved_at": time.time(),
         }
         for name, client in self._clients.items():
@@ -1073,32 +1079,15 @@ class MCPRegistry:
                     "connected": client.connected,
                     "tools_count": len(client._tools_cache),
                 })
-        # 仅持久化本地工具路由（远程路由在重连后重建）
-        state["tool_routing"] = {
-            t: loc for t, loc in self._tool_location.items() if loc == "local"
-        }
-        try:
-            os.makedirs(DATA_DIR, exist_ok=True)
-            with open(STATE_FILE, "w", encoding="utf-8") as f:
-                json.dump(state, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.warning(f"保存MCP状态失败: {e}")
+        return state
 
-    def _load_state(self) -> None:
-        """从 SCU3_data/mcp_state.json 加载状态"""
-        if not os.path.exists(STATE_FILE):
-            return
-        try:
-            with open(STATE_FILE, "r", encoding="utf-8") as f:
-                state = json.load(f)
-            # 恢复本地工具路由（远程连接需手动重建）
-            for tool, loc in state.get("tool_routing", {}).items():
-                if loc == "local":
-                    self._tool_location[tool] = loc
-            logger.info(f"Registry: 已加载MCP状态，"
-                        f"本地工具路由{sum(1 for v in self._tool_location.values() if v == 'local')}个")
-        except Exception as e:
-            logger.warning(f"加载MCP状态失败: {e}")
+    def _deserialize_state(self, state: dict) -> None:
+        """从状态恢复（远程连接需手动重建，只恢复本地工具路由）"""
+        for tool, loc in state.get("tool_routing", {}).items():
+            if loc == "local":
+                self._tool_location[tool] = loc
+        logger.info(f"Registry: 已加载MCP状态，"
+                    f"本地工具路由{sum(1 for v in self._tool_location.values() if v == 'local')}个")
 
 
 # ─── 单例 ────────────────────────────────────

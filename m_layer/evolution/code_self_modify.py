@@ -30,6 +30,7 @@ import logging
 import threading
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
+from core.abc import PersistableMixin, StatusableMixin
 
 logger = logging.getLogger("SCU3.m.selfmod")
 
@@ -78,7 +79,7 @@ class YinYangEndorseError(Exception):
     """阴阳双签失败"""
 
 
-class CodeSelfModifier:
+class CodeSelfModifier(PersistableMixin, StatusableMixin):
     """代码自修改引擎
 
     用法：
@@ -113,32 +114,20 @@ class CodeSelfModifier:
     # ─── 状态持久化 ────────────────────────────────
 
     def _state_path(self) -> str:
-        return os.path.join(self.project_root, "SCU3_data", "self_modify_state.json")
+        """PersistableMixin 接口：返回状态文件路径"""
+        return os.path.join(self.backup_dir, "self_modify_state.json")
 
-    def _load_state(self):
-        path = self._state_path()
-        if not os.path.exists(path):
-            return
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                state = json.load(f)
-            self._history = state.get("history", [])[-200:]
-            logger.info(f"自修改状态加载: 历史{len(self._history)}条")
-        except Exception as e:
-            logger.warning(f"加载自修改状态失败: {e}")
+    def _serialize_state(self) -> dict:
+        """PersistableMixin 接口：序列化状态"""
+        return {
+            "history": self._history[-200:],
+            "updated_at": datetime.now().isoformat(),
+        }
 
-    def _save_state(self):
-        path = self._state_path()
-        try:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            state = {
-                "history": self._history[-200:],
-                "updated_at": datetime.now().isoformat(),
-            }
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(state, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.error(f"保存自修改状态失败: {e}")
+    def _deserialize_state(self, state: dict) -> None:
+        """PersistableMixin 接口：反序列化状态"""
+        self._history = state.get("history", [])[-200:]
+        logger.info(f"自修改状态加载: 历史{len(self._history)}条")
 
     # ─── 路径安全 ────────────────────────────────
 

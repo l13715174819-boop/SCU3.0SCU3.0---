@@ -22,11 +22,12 @@ import logging
 import threading
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from core.abc import PersistableMixin, StatusableMixin, SearchableMixin
 
 logger = logging.getLogger("SCU3.m.agent_learn")
 
 
-class AgentLearningEngine:
+class AgentLearningEngine(PersistableMixin, StatusableMixin, SearchableMixin):
     """Agent执行经验学习引擎
 
     用法:
@@ -45,7 +46,6 @@ class AgentLearningEngine:
             data_dir = os.path.join(base, "SCU3_data")
         self._data_dir = data_dir
         os.makedirs(data_dir, exist_ok=True)
-        self._state_path = os.path.join(data_dir, self.STATE_FILE)
 
         self._lock = threading.Lock()
         # 经验库：goal_pattern → {success_count, fail_count, best_strategy, avg_time}
@@ -258,32 +258,25 @@ class AgentLearningEngine:
         except Exception as e:
             logger.warning(f"沉淀到RAG失败: {e}")
 
-    def _load_state(self) -> None:
-        """加载持久化状态"""
-        if os.path.exists(self._state_path):
-            try:
-                with open(self._state_path, "r", encoding="utf-8") as f:
-                    state = json.loads(f.read())
-                self._experiences = state.get("experiences", {})
-                self._tool_combos = state.get("tool_combos", {})
-                self._failure_patterns = state.get("failure_patterns", {})
-                logger.info(f"加载Agent学习状态: {len(self._experiences)}个经验")
-            except Exception as e:
-                logger.warning(f"加载学习状态失败: {e}")
+    def _state_path(self) -> str:
+        """PersistableMixin 接口：返回状态文件路径"""
+        return os.path.join(self._data_dir, self.STATE_FILE)
 
-    def _save_state(self) -> None:
-        """持久化状态"""
-        try:
-            state = {
-                "experiences": self._experiences,
-                "tool_combos": self._tool_combos,
-                "failure_patterns": self._failure_patterns,
-                "saved_at": datetime.now().isoformat(),
-            }
-            with open(self._state_path, "w", encoding="utf-8") as f:
-                f.write(json.dumps(state, ensure_ascii=False, indent=2))
-        except Exception as e:
-            logger.warning(f"保存学习状态失败: {e}")
+    def _serialize_state(self) -> dict:
+        """PersistableMixin 接口：序列化状态"""
+        return {
+            "experiences": self._experiences,
+            "tool_combos": self._tool_combos,
+            "failure_patterns": self._failure_patterns,
+            "saved_at": datetime.now().isoformat(),
+        }
+
+    def _deserialize_state(self, state: dict) -> None:
+        """PersistableMixin 接口：反序列化状态"""
+        self._experiences = state.get("experiences", {})
+        self._tool_combos = state.get("tool_combos", {})
+        self._failure_patterns = state.get("failure_patterns", {})
+        logger.info(f"加载Agent学习状态: {len(self._experiences)}个经验")
 
 
 # ─── 单例 ────────────────────────────────────

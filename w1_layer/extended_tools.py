@@ -484,18 +484,9 @@ class ExtendedTools:
     # ─── 路径安全 ────────────────────────────────────
 
     def _safe_path(self, path: str) -> Optional[str]:
-        """安全路径检查"""
-        if os.path.isabs(path):
-            full = os.path.abspath(path)
-        else:
-            full = os.path.abspath(os.path.join(SANDBOX_DIR, path))
-        try:
-            common = os.path.commonpath([full, SANDBOX_DIR])
-            if common != SANDBOX_DIR:
-                return None
-        except ValueError:
-            return None
-        return full
+        """安全路径检查（委托公共工具 w1_layer/path_utils.py）"""
+        from w1_layer.path_utils import safe_resolve_path
+        return safe_resolve_path(path, SANDBOX_DIR)
 
 
 # ─── 单例 ────────────────────────────────────

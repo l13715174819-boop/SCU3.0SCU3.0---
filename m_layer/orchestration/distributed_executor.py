@@ -32,6 +32,7 @@ from typing import Dict, Any, List, Optional, Callable, Union
 from datetime import datetime
 from urllib import request as url_request
 from urllib.error import URLError, HTTPError
+from core.abc import StatusableMixin
 
 logger = logging.getLogger("SCU3.m.distributed")
 
@@ -1080,7 +1081,7 @@ class LocalMultiProcessExecutor:
 # =============================================================================
 # DistributedExecutor — 分布式执行器（主类）
 # =============================================================================
-class DistributedExecutor:
+class DistributedExecutor(StatusableMixin):
     """分布式任务执行器：协调任务分片、节点调度、结果合并
 
     用法:

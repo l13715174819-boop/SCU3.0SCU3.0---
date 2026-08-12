@@ -22,6 +22,7 @@ import logging
 import threading
 from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime
+from core.abc import StatusableMixin, SearchableMixin
 
 logger = logging.getLogger("SCU3.w1.knowledge")
 
@@ -30,7 +31,7 @@ KNOWLEDGE_DIR = os.path.join(BASE_DIR, "SCU3_data", "knowledge")
 KNOWLEDGE_INDEX_PATH = os.path.join(KNOWLEDGE_DIR, "knowledge_index.json")
 
 
-class KnowledgeStore:
+class KnowledgeStore(StatusableMixin, SearchableMixin):
     """RAG知识库 — TF-IDF向量检索"""
 
     def __init__(self, store_path: str = KNOWLEDGE_INDEX_PATH):

@@ -45,7 +45,8 @@ class CognitionLayer:
         # 不触发Pair硬约束（认知思考非高风险），软双签作质量参考
         if intent == "analytical" and not tool_result:
             try:
-                yy_result = self._yin_yang_think(user_input, context)
+                yy_result = self._yin_yang_think(user_input, context,
+                                                 sanitized=ctx.get("sanitized", False))
                 if yy_result:
                     ctx["response"] = yy_result["response"]
                     ctx["yin_yang"] = yy_result["state"]
@@ -73,7 +74,8 @@ class CognitionLayer:
                     search_context += f"\n\n【本地知识库参考】\n{context}"
                     logger.info("综合注入: web_search结果 + RAG知识库")
                 ctx["response"] = self._generate_llm_response(
-                    user_input, search_context, "web_search", recalled
+                    user_input, search_context, "web_search", recalled,
+                    sanitized=ctx.get("sanitized", False)
                 )
             elif tool_name == "web_crawl":
                 # 全网爬取结果 + RAG知识库 综合注入
@@ -82,7 +84,8 @@ class CognitionLayer:
                     crawl_context += f"\n\n【本地知识库参考】\n{context}"
                     logger.info("综合注入: web_crawl结果 + RAG知识库")
                 ctx["response"] = self._generate_llm_response(
-                    user_input, crawl_context, "web_search", recalled
+                    user_input, crawl_context, "web_search", recalled,
+                    sanitized=ctx.get("sanitized", False)
                 )
             else:
                 # 确定性工具（calculator/time_now/weather等）：格式化结果输出
@@ -92,7 +95,8 @@ class CognitionLayer:
                     ctx["response"] = self._generate_llm_response(
                         user_input,
                         f"{tool_response}\n\n【本地知识库参考】\n{context}",
-                        intent, recalled
+                        intent, recalled,
+                        sanitized=ctx.get("sanitized", False)
                     )
                 else:
                     ctx["response"] = tool_response
@@ -104,19 +108,26 @@ class CognitionLayer:
             if not plugin_handled:
                 # 降级策略2：插件市场也无法解决 → RAG + LLM常规对话
                 logger.warning(f"插件市场未能解决, 降级到LLM常规对话(注入RAG)")
-                ctx["response"] = self._generate_llm_response(user_input, context, "conversation", recalled)
+                ctx["response"] = self._generate_llm_response(
+                    user_input, context, "conversation", recalled,
+                    sanitized=ctx.get("sanitized", False)
+                )
                 ctx["fallback"] = True
                 ctx["fallback_reason"] = "tools_all_failed"
         elif intent == "web_search" and not tool_result:
             # 兜底：感知层判为联网搜索意图，但执行层未触发工具（正则遗漏等）
             # 主动补一次 web_search，避免 LLM 凭空说"不能实时联网"
             domain = ctx.get("domain", "general")
-            ctx["response"] = self._fallback_web_search(user_input, recalled, domain)
+            ctx["response"] = self._fallback_web_search(user_input, recalled, domain,
+                                                        sanitized=ctx.get("sanitized", False))
             ctx["fallback"] = True
             ctx["fallback_reason"] = "intent_web_search_no_tool"
         else:
             # 无工具调用：RAG上下文 + LLM生成回复（闲聊也注入RAG，强制完整流程）
-            ctx["response"] = self._generate_llm_response(user_input, context, intent, recalled)
+            ctx["response"] = self._generate_llm_response(
+                user_input, context, intent, recalled,
+                sanitized=ctx.get("sanitized", False)
+            )
 
         ctx["cognition_ok"] = True
         ctx["llm_mode"] = self.llm.mode
@@ -223,7 +234,10 @@ class CognitionLayer:
                 self._sink_experience(user_input, plugin_name, tool_name, ctx.get("intent", ""))
             else:
                 # 插件加载但工具重试失败 → 用 LLM 基于用户输入生成回复
-                ctx["response"] = self._generate_llm_response(user_input, "", "conversation", recalled)
+                ctx["response"] = self._generate_llm_response(
+                    user_input, "", "conversation", recalled,
+                    sanitized=ctx.get("sanitized", False)
+                )
                 ctx["plugin_used"] = plugin_name
                 ctx["plugin_retry_failed"] = True
 
@@ -330,7 +344,8 @@ class CognitionLayer:
 
         return f"（插件 {plugin_name} 工具 {tool_name} 结果）: {result}"
 
-    def _fallback_web_search(self, user_input: str, recalled: list, domain: str = "general") -> str:
+    def _fallback_web_search(self, user_input: str, recalled: list, domain: str = "general",
+                            sanitized: bool = False) -> str:
         """兜底联网搜索：感知层判为 web_search 意图但执行层未触发工具时调用
 
         主动用 user_input 作为 query 执行一次 web_search + 深度爬取，再注入 LLM。
@@ -358,7 +373,8 @@ class CognitionLayer:
                 deep_context = self._deep_crawl_search_results(result, max_pages=2)
                 if deep_context:
                     search_context = search_context + "\n\n" + deep_context
-                return self._generate_llm_response(user_input, search_context, "web_search", recalled)
+                return self._generate_llm_response(user_input, search_context, "web_search",
+                                                   recalled, sanitized=sanitized)
             else:
                 # 搜索工具本身失败 → 如实说明，但仍不说"不能联网"，而是说"此次未获取到"
                 err = tool_result.get("error", "未知错误")
@@ -464,24 +480,37 @@ class CognitionLayer:
         lines.append(f"\n{content}")
         return "\n".join(lines)
 
-    def _generate_llm_response(self, user_input: str, context: str, intent: str, history: list = None) -> str:
+    def _generate_llm_response(self, user_input: str, context: str, intent: str,
+                              history: list = None, sanitized: bool = False) -> str:
         """通过LLM生成回复（支持多轮对话上下文）
 
-        隐私保护（P1修复）：调用云端LLM前对 user_input/context/history 做PII脱敏，
+        隐私保护（P1修复）：调用云端LLM前对 context/history 做PII脱敏，
         防止手机号/身份证/密钥/内网IP等敏感信息出境。
+        user_input 已由 W2 感知层统一脱敏（sanitized=True 时跳过，避免重复脱敏）。
 
         上下文强化（方案2）：followup 意图时，将最近1轮问答显式注入context，
         强化LLM对对话历史的引用，解决追问场景上下文丢失问题。
         """
-        # P1修复：LLM输入侧脱敏（防止PII/密钥泄露给云端LLM）
-        try:
-            from guard.content_filter import ContentFilter
-            _cf = ContentFilter()
-            user_input, _ = _cf.filter(user_input)
-            if context:
+        # P1修复：LLM输入侧脱敏（user_input 已由 W2 脱敏时跳过，仅脱敏 context）
+        if not sanitized:
+            try:
+                from guard.content_filter import ContentFilter
+                _cf = ContentFilter()
+                user_input, _ = _cf.filter(user_input)
+            except Exception as _e:
+                logger.debug(f"user_input脱敏跳过(非阻断): {_e}")
+                _cf = None
+        else:
+            _cf = None
+        # context 来自 RAG 检索，未经 W2 脱敏，仍需过滤
+        if context:
+            try:
+                if _cf is None:
+                    from guard.content_filter import ContentFilter
+                    _cf = ContentFilter()
                 context, _ = _cf.filter(context)
-        except Exception as _e:
-            logger.debug(f"输入脱敏跳过(非阻断): {_e}")
+            except Exception as _e:
+                logger.debug(f"context脱敏跳过(非阻断): {_e}")
 
         # 方案2：followup 意图时，将最近1轮问答显式注入context，强化上下文引用
         if intent == "followup" and history:
@@ -544,7 +573,8 @@ class CognitionLayer:
 
     # ─── 方案C：阴阳对子思考 ────────────────────────────────
 
-    def _yin_yang_think(self, question: str, context: str) -> Dict[str, Any]:
+    def _yin_yang_think(self, question: str, context: str,
+                        sanitized: bool = False) -> Dict[str, Any]:
         """阴阳对子思考主流程（方案C：基类版）
 
         流程：
@@ -563,15 +593,24 @@ class CognitionLayer:
 
         endorser = get_cognition_endorser()
 
-        # P1修复：脱敏
-        try:
-            from guard.content_filter import ContentFilter
-            _cf = ContentFilter()
-            question, _ = _cf.filter(question)
-            if context:
+        # P1修复：脱敏（question 已由 W2 脱敏时跳过，仅脱敏 context）
+        if not sanitized:
+            try:
+                from guard.content_filter import ContentFilter
+                _cf = ContentFilter()
+                question, _ = _cf.filter(question)
+            except Exception:
+                _cf = None
+        else:
+            _cf = None
+        if context:
+            try:
+                if _cf is None:
+                    from guard.content_filter import ContentFilter
+                    _cf = ContentFilter()
                 context, _ = _cf.filter(context)
-        except Exception:
-            pass
+            except Exception:
+                pass
 
         # 1. 阴方思考（DeepSeek-Chat，批判视角）
         yin_prompt = ("你是严谨的批判者（阴方）。对给定问题，找出漏洞、风险、反对理由。"

@@ -34,6 +34,7 @@ import threading
 import importlib
 import importlib.util
 from typing import Dict, Any, List, Optional, Callable, Tuple
+from core.abc import StatusableMixin
 
 logger = logging.getLogger("SCU3.m.plugins")
 
@@ -223,7 +224,7 @@ class PluginSandbox:
                 self._stats.pop(name, None)
 
 
-class PluginManager:
+class PluginManager(StatusableMixin):
     """插件管理器
 
     用法:

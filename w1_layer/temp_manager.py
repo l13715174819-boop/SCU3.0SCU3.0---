@@ -221,23 +221,14 @@ class TempManager:
             return list(reversed(self._history[-limit:]))
 
     def _safe_path(self, path: str) -> Optional[str]:
-        """安全路径检查：确保路径在sandbox目录内"""
-        if os.path.isabs(path):
-            full = os.path.abspath(path)
-        else:
-            full = os.path.abspath(os.path.join(self._sandbox_dir, path))
-
-        if not self._is_in_sandbox(full):
-            return None
-        return full
+        """安全路径检查（委托公共工具 w1_layer/path_utils.py）"""
+        from w1_layer.path_utils import safe_resolve_path
+        return safe_resolve_path(path, self._sandbox_dir)
 
     def _is_in_sandbox(self, full_path: str) -> bool:
         """检查路径是否在sandbox目录内"""
-        try:
-            common = os.path.commonpath([full_path, self._sandbox_dir])
-            return common == self._sandbox_dir
-        except ValueError:
-            return False
+        from w1_layer.path_utils import safe_resolve_path
+        return safe_resolve_path(full_path, self._sandbox_dir) is not None
 
 
 # ─── 单例 ────────────────────────────────────
