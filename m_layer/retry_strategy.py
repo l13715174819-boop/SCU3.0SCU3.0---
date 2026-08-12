@@ -30,7 +30,7 @@ import logging
 from typing import Dict, Any, List, Optional, Callable, Tuple
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.retry")
+logger = logging.getLogger("SCU3.m.retry")
 
 
 class RetryStrategy:

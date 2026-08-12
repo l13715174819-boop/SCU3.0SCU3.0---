@@ -16,7 +16,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.viz")
+logger = logging.getLogger("SCU3.m.viz")
 
 
 class ExecutionVisualizer:

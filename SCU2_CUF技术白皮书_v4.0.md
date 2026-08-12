@@ -1,4 +1,4 @@
-# SCU2 CUF技术白皮书 v4.0
+# SCU3 CUF技术白皮书 v4.0
 
 > **版本**: v4.0 — Agent自主执行能力
 > **日期**: 2026-08-10
@@ -12,7 +12,7 @@
 | 版本 | 核心能力 | 状态 |
 |------|---------|------|
 | v1.0 | CUF对子理论、三子系统 | 已交付 |
-| v2.0 | SCU2 v3架构落地、3+3+3验证、5漏洞修复 | 已交付 |
+| v2.0 | SCU3 v3架构落地、3+3+3验证、5漏洞修复 | 已交付 |
 | v3.0 | 本地大模型接入 + 自学习闭环 + 代码自修改 | 已交付 |
 | **v4.0** | **Agent自主执行（任务拆解+多步执行+脚本自清理+经验学习）** | **本版本** |
 
@@ -20,9 +20,9 @@
 
 ## 二、v4.0核心目标
 
-让SCU2具备**完整的Agent自主执行能力**，对标AI助手的工作模式：
+让SCU3具备**完整的Agent自主执行能力**，对标AI助手的工作模式：
 
-| AI助手能力 | SCU2 v3.0状态 | SCU2 v4.0目标 |
+| AI助手能力 | SCU3 v3.0状态 | SCU3 v4.0目标 |
 |-----------|--------------|--------------|
 | 理解用户意图 | ✓ 感知层 | ✓ |
 | 拆解任务为子步骤 | ✗ 单轮 | ✓ TaskPlanner |
@@ -293,7 +293,7 @@ result = chain.execute()
 }
 ```
 
-**持久化**: `scu2_data/agent_learning.json`
+**持久化**: `SCU3_data/agent_learning.json`
 
 ### 4.9 tool_preference.py（工具使用偏好学习）
 
@@ -348,13 +348,13 @@ score = 成功率 * 0.7 + 速度分 * 0.3
 ```bash
 # 完整Agent执行
 curl -X POST http://127.0.0.1:8300/agent/run \
-  -H "X-API-Key: scu2_dev_key_2026" \
+  -H "X-API-Key: SCU3_dev_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"goal": "分析readme.md文件并生成报告", "cleanup": true, "reflect": true}'
 
 # 仅生成计划
 curl -X POST http://127.0.0.1:8300/agent/plan \
-  -H "X-API-Key: scu2_dev_key_2026" \
+  -H "X-API-Key: SCU3_dev_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"goal": "计算 2+3*4"}'
 ```
@@ -368,7 +368,7 @@ curl -X POST http://127.0.0.1:8300/agent/plan \
 **请求示例**:
 ```bash
 curl -X POST http://127.0.0.1:8300/codegen/generate \
-  -H "X-API-Key: scu2_dev_key_2026" \
+  -H "X-API-Key: SCU3_dev_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"requirement": "计算1到100的和", "execute": true}'
 ```
@@ -553,9 +553,9 @@ temp_after = tm.list_temp_resources()
 
 ## 九、能力对标总结
 
-### SCU2 v4.0 vs AI助手能力对照
+### SCU3 v4.0 vs AI助手能力对照
 
-| 能力维度 | AI助手 | SCU2 v4.0 | 实现方式 |
+| 能力维度 | AI助手 | SCU3 v4.0 | 实现方式 |
 |---------|--------|-----------|---------|
 | 理解用户意图 | ✓ | ✓ | 感知层 + TaskPlanner |
 | 任务拆解 | ✓ | ✓ | TaskPlanner (LLM+规则双模式) |
@@ -576,7 +576,7 @@ temp_after = tm.list_temp_resources()
 
 **用户**: "分析readme.md的词频并生成报告"
 
-**SCU2 v4.0执行流程**:
+**SCU3 v4.0执行流程**:
 1. TaskPlanner拆解为3步：
    - 步骤1: file_read(path="readme.md")
    - 步骤2: code_run(词频统计代码) [依赖步骤1]
@@ -618,7 +618,7 @@ temp_after = tm.list_temp_resources()
 - 78/78端到端测试通过
 
 ### v2.0 (2026-08-10)
-- SCU2 v3架构落地（三维度分离）
+- SCU3 v3架构落地（三维度分离）
 - 3+3+3验证（全功能+饱和攻击+代码检查）
 - 5个严重漏洞修复
 - RAG知识库 + 13种工具补全

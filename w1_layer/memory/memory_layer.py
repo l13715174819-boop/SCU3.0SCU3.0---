@@ -17,7 +17,7 @@ from typing import Dict, Any, List
 from w1_layer.memory.unified_api import get_memory_store
 from w1_layer.knowledge_store import get_store
 
-logger = logging.getLogger("scu2.w1.memory")
+logger = logging.getLogger("SCU3.w1.memory")
 
 
 class MemoryLayer:

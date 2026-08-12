@@ -3,8 +3,8 @@
 import urllib.request, json, time
 
 API_BASE = "http://localhost:8000"
-HEADERS = {"X-API-Key": "scu2_dev_key_2026", "Content-Type": "application/json"}
-ADMIN_HEADERS = {"X-API-Key": "scu2_admin_key_2026", "Content-Type": "application/json"}
+HEADERS = {"X-API-Key": "SCU3_dev_key_2026", "Content-Type": "application/json"}
+ADMIN_HEADERS = {"X-API-Key": "SCU3_admin_key_2026", "Content-Type": "application/json"}
 
 def api_post(path, data, timeout=180):
     req = urllib.request.Request(
@@ -33,7 +33,7 @@ with urllib.request.urlopen(req, timeout=10) as r:
 # 2. 对话测试（与3B相同的测试题）
 print("\n[2] 对话测试")
 test_cases = [
-    ("你好，请用一句话介绍自己。", "自我介绍", "3B: 我是SCU2 v5.0...（流畅但简单）"),
+    ("你好，请用一句话介绍自己。", "自我介绍", "3B: 我是SCU3 v5.0...（流畅但简单）"),
     ("什么是向量数据库？", "知识问答", "3B: 向量数据库是一种用于存储...（正确）"),
     ("用Python写一个hello world", "代码生成", "3B: print('Hello World')（正确）"),
     ("1+1等于几？", "简单推理", "3B: 1+1等于2（正确）"),
@@ -41,7 +41,7 @@ test_cases = [
     ("用Python实现二分查找，要求处理空列表和重复元素", "复杂代码", "3B: 基本版本（无边界处理）"),
     ("解释什么是闭包，并给出一个实际应用场景", "概念+应用", "3B: 概念正确但应用场景笼统"),
     ("一个房间有3个开关控制隔壁房间的3盏灯，你只能进入隔壁房间一次，如何确定每个开关对应哪盏灯？", "逻辑推理", "3B: 可能答不对"),
-    ("SCU2 v5.0有哪些新功能？", "RAG问答", "3B: 列出4项（正确）"),
+    ("SCU3 v5.0有哪些新功能？", "RAG问答", "3B: 列出4项（正确）"),
 ]
 
 results = []

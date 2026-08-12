@@ -18,7 +18,7 @@ v5.0第四批：提供Agent能力的插件化扩展机制
      - MetricsPlugin   统计工具使用频率与响应时间
      - SafetyPlugin    敏感词过滤扩展
   4. 插件沙箱：异常隔离 + 执行超时 + 资源限制
-  5. 状态持久化到 scu2_data/plugins_state.json
+  5. 状态持久化到 SCU3_data/plugins_state.json
   6. 单例 get_plugin_manager()
 
 架构归属：M层（元认知层的扩展机制）
@@ -35,7 +35,7 @@ import importlib
 import importlib.util
 from typing import Dict, Any, List, Optional, Callable, Tuple
 
-logger = logging.getLogger("scu2.m.plugins")
+logger = logging.getLogger("SCU3.m.plugins")
 
 # ─── 沙箱默认配置 ────────────────────────────────────
 _DEFAULT_TIMEOUT_SEC: float = 5.0          # 单个钩子执行超时（秒）
@@ -52,7 +52,7 @@ class Plugin:
         class MyPlugin(Plugin):
             name = "my_plugin"
             version = "1.0.0"
-            author = "scu2"
+            author = "SCU3"
             description = "示例插件"
 
             def on_message(self, message):
@@ -234,10 +234,10 @@ class PluginManager:
     """
 
     def __init__(self, data_dir: Optional[str] = None):
-        # 数据目录：scu2_data/
+        # 数据目录：SCU3_data/
         if data_dir is None:
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            data_dir = os.path.join(base, "scu2_data")
+            data_dir = os.path.join(base, "SCU3_data")
         self._data_dir = data_dir
         os.makedirs(self._data_dir, exist_ok=True)
         self._state_path = os.path.join(self._data_dir, "plugins_state.json")
@@ -463,7 +463,7 @@ class PluginManager:
         try:
             # 使用 importlib 动态加载，避免模块名冲突
             spec = importlib.util.spec_from_file_location(
-                f"scu2_plugin_{mod_name}", file_path)
+                f"SCU3_plugin_{mod_name}", file_path)
             if spec is None or spec.loader is None:
                 logger.warning(f"无法为 {fname} 创建模块规格")
                 return None
@@ -502,7 +502,7 @@ class PluginManager:
 
     # ─── 持久化 ──────────────────────────────────────
     def _save_state(self) -> None:
-        """保存插件状态到 scu2_data/plugins_state.json"""
+        """保存插件状态到 SCU3_data/plugins_state.json"""
         state = {
             "plugins": {},
             "saved_at": __import__("datetime").datetime.now().isoformat(),
@@ -521,7 +521,7 @@ class PluginManager:
             logger.warning(f"保存插件状态失败: {e}")
 
     def _load_state(self) -> None:
-        """从 scu2_data/plugins_state.json 恢复配置与启用状态
+        """从 SCU3_data/plugins_state.json 恢复配置与启用状态
 
         注意：仅恢复配置字典与启用标志，插件实例需在重新注册后才会生效。
         """
@@ -549,12 +549,12 @@ class LoggingPlugin(Plugin):
 
     name = "logging"
     version = "1.0.0"
-    author = "scu2"
+    author = "SCU3"
     description = "记录所有消息和工具调用到日志"
 
     def __init__(self):
         super().__init__()
-        self._log_logger = logging.getLogger("scu2.m.plugins.logging")
+        self._log_logger = logging.getLogger("SCU3.m.plugins.logging")
 
     def on_load(self) -> None:
         self._log_logger.info("LoggingPlugin 已加载")
@@ -580,12 +580,12 @@ class MetricsPlugin(Plugin):
 
     name = "metrics"
     version = "1.0.0"
-    author = "scu2"
+    author = "SCU3"
     description = "统计工具使用频率与响应时间"
 
     def __init__(self):
         super().__init__()
-        self._metrics_logger = logging.getLogger("scu2.m.plugins.metrics")
+        self._metrics_logger = logging.getLogger("SCU3.m.plugins.metrics")
         # 工具调用次数: {tool_name: count}
         self._tool_call_counts: Dict[str, int] = {}
         # 工具响应时间: {tool_name: [ms, ms, ...]}
@@ -652,7 +652,7 @@ class SafetyPlugin(Plugin):
 
     name = "safety"
     version = "1.0.0"
-    author = "scu2"
+    author = "SCU3"
     description = "敏感词过滤扩展"
 
     # 内置基础敏感词（可被 config 覆盖/扩展）
@@ -663,7 +663,7 @@ class SafetyPlugin(Plugin):
 
     def __init__(self):
         super().__init__()
-        self._safety_logger = logging.getLogger("scu2.m.plugins.safety")
+        self._safety_logger = logging.getLogger("SCU3.m.plugins.safety")
         self._filtered_count: int = 0
         self._lock = threading.Lock()
 

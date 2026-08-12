@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SCU2 全功能测试 · 3轮 (v2 - 修正断言)
+SCU3 全功能测试 · 3轮 (v2 - 修正断言)
 覆盖所有14个API端点 + 13种工具 + RAG + SSE + 前端
 """
 import json
@@ -165,12 +165,12 @@ def run_round(round_num):
     # ═══ 3. 知识库RAG ═══
     print(f"\n── 3. 知识库RAG ──")
 
-    s, r = post("/knowledge/add", {"content": f"第{round_num}轮测试文档-SCU2架构验证", "source": "test"})
+    s, r = post("/knowledge/add", {"content": f"第{round_num}轮测试文档-SCU3架构验证", "source": "test"})
     doc_id = r.get("doc_id", -1)
     check("knowledge.add", s == 200 and r.get("success") and doc_id > 0,
           f"doc_id={doc_id}")
 
-    s, r = get("/knowledge/search?q=SCU2架构&top_k=3")
+    s, r = get("/knowledge/search?q=SCU3架构&top_k=3")
     results_count = len(r.get("results", []))
     check("knowledge.search", s == 200 and results_count > 0,
           f"results={results_count}")
@@ -245,7 +245,7 @@ def run_round(round_num):
 
 
 print("=" * 70)
-print("SCU2 全功能测试 · 3轮 (v2)")
+print("SCU3 全功能测试 · 3轮 (v2)")
 print("=" * 70)
 
 all_results = []

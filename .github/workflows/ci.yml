@@ -1,13 +1,13 @@
-# CI/CD 配置 - SCU2 自动化测试流水线
+# CI/CD 配置 - SCU3 自动化测试流水线
 # 阶段1测试框架配置
 
-name: SCU2 CI
+name: SCU3 CI
 
 on:
   push:
-    paths: ['scu2/**']
+    paths: ['SCU3/**']
   pull_request:
-    paths: ['scu2/**']
+    paths: ['SCU3/**']
 
 jobs:
   test:
@@ -26,17 +26,17 @@ jobs:
           pip install fastapi uvicorn
 
       - name: D层完整性校验
-        working-directory: scu2
+        working-directory: SCU3
         run: python -c "import sys; sys.path.insert(0,'.'); from guard.d_layer_integrity import verify_on_startup; ok,msg=verify_on_startup(); exit(0 if ok else 1)"
 
       - name: A4依赖关系扫描
-        working-directory: scu2
+        working-directory: SCU3
         run: python tools/dependency_scanner.py .
 
       - name: 单元测试
-        working-directory: scu2
+        working-directory: SCU3
         run: python -m unittest discover -s tests -p "test_*.py" -v
 
       - name: 性能测试
-        working-directory: scu2
+        working-directory: SCU3
         run: python -m unittest tests.test_performance -v

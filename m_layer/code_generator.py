@@ -28,7 +28,7 @@ import re
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.codegen")
+logger = logging.getLogger("SCU3.m.codegen")
 
 
 class CodeGenerator:

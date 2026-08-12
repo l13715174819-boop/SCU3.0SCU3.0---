@@ -24,7 +24,7 @@ print(f"  维度: {vs.vector_dim}")
 
 # 添加测试文档
 vs.clear()
-id1 = vs.add_document("SCU2是一个基于CUF架构的智能Agent系统，支持三维度分离设计", {"source": "test"})
+id1 = vs.add_document("SCU3是一个基于CUF架构的智能Agent系统，支持三维度分离设计", {"source": "test"})
 id2 = vs.add_document("向量数据库使用FAISS进行高效相似度检索，支持混合检索", {"source": "test"})
 id3 = vs.add_document("Qwen-7B是通义千问的7B参数本地大语言模型，支持中文对话", {"source": "test"})
 print(f"  添加3个文档: ids=[{id1},{id2},{id3}]")

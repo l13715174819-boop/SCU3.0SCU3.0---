@@ -15,7 +15,7 @@ from typing import Dict, Any
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from m_layer.llm_client import get_client
 
-logger = logging.getLogger("scu2.m.cognition")
+logger = logging.getLogger("SCU3.m.cognition")
 
 
 class CognitionLayer:

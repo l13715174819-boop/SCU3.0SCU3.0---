@@ -20,7 +20,7 @@ import re
 import logging
 from typing import Tuple, List, Set
 
-logger = logging.getLogger("scu2.guard.filter")
+logger = logging.getLogger("SCU3.guard.filter")
 
 
 class ContentFilter:

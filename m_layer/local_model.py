@@ -14,7 +14,7 @@ m_layer/local_model.py — 本地大模型客户端（M层）
   3. 降级策略（transformers未安装/模型未下载/显存不足/加载失败 → Ollama）
   4. 模型管理（状态跟踪、显存监控、闲置自动卸载、模型预热）
   5. 对话格式（Qwen ChatML / GLM 特殊token / 通用 OpenAI 消息格式）
-  6. 配置持久化到 scu2_data/local_model_config.json
+  6. 配置持久化到 SCU3_data/local_model_config.json
   7. 单例模式 get_local_model()
   8. 与 LLMClient 集成（to_llm_compatible / is_available）
 
@@ -29,11 +29,11 @@ import logging
 import threading
 from typing import Optional, List, Dict, Any, Generator, Union
 
-logger = logging.getLogger("scu2.m.local_model")
+logger = logging.getLogger("SCU3.m.local_model")
 
 # ─── 项目路径 ────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 CONFIG_PATH = os.path.join(DATA_DIR, "local_model_config.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -209,7 +209,7 @@ class LocalModelClient:
     # 默认空闲超时（秒）：30分钟
     DEFAULT_IDLE_TIMEOUT = 30 * 60
     # 默认系统提示词
-    DEFAULT_SYSTEM_PROMPT = "你是标准计算单元2（SCU2），一个带CUF熵税守卫的智能助手。回答简洁准确。"
+    DEFAULT_SYSTEM_PROMPT = "你是标准计算单元2（SCU3），一个带CUF熵税守卫的智能助手。回答简洁准确。"
 
     def __init__(
         self,

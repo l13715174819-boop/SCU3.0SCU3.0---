@@ -27,7 +27,7 @@ import urllib.request
 import json as _json
 from typing import Optional, List, Dict, Any, Generator
 
-logger = logging.getLogger("scu2.m.llm")
+logger = logging.getLogger("SCU3.m.llm")
 
 
 class LLMClient:
@@ -49,7 +49,7 @@ class LLMClient:
 
     # ─── 系统提示词 ────────────────────────────────
     SYSTEM_PROMPTS = {
-        "default": ("你是SCU2智能助手，具备联网搜索、网页爬取、工具调用等能力。"
+        "default": ("你是SCU3智能助手，具备联网搜索、网页爬取、工具调用等能力。"
                     "自然、友好地回答用户问题，像朋友一样交流。"
                     "当用户询问实时信息（新闻、天气、价格、最新进展等）时，系统会自动联网搜索并将结果提供给你，"
                     "请基于提供的搜索结果回答；若未提供搜索结果，说明未获取到实时信息，但不要声称自己「不能联网」。"
@@ -61,11 +61,11 @@ class LLMClient:
                        "请基于这些搜索结果回答用户问题，回答要准确、简洁、有条理，并在末尾附上信息来源链接。"
                        "若上下文中没有搜索结果或结果不足以回答，请如实说明「此次未获取到相关搜索结果」，"
                        "不要声称自己「不能联网」——联网能力由系统提供，你只需基于结果作答。"),
-        "knowledge": ("你是 SCU2 系统的知识助手。系统已从本地知识库检索相关文档作为上下文提供给你，"
-                      "请基于这些上下文回答用户关于 SCU2 架构、CUF 安全内核、三级记忆、工具链等本地主题的问题。"
+        "knowledge": ("你是 SCU3 系统的知识助手。系统已从本地知识库检索相关文档作为上下文提供给你，"
+                      "请基于这些上下文回答用户关于 SCU3 架构、CUF 安全内核、三级记忆、工具链等本地主题的问题。"
                       "回答要准确、有条理，引用上下文中的具体内容。"
                       "若上下文不足以回答，请如实说明，不要编造。"),
-        "followup": ("你是SCU2智能助手。用户正在进行多轮对话追问或修正前轮回答。"
+        "followup": ("你是SCU3智能助手。用户正在进行多轮对话追问或修正前轮回答。"
                      "请务必参考对话历史中的上下文，理解用户指代词（刚才/那个/这个方案等）的具体指向，"
                      "基于前轮回答内容进行深入、修正或转换视角，不要当作独立问题处理。"
                      "如果对话历史中确实没有相关上下文，请礼貌说明并请用户重新描述。"),
@@ -970,9 +970,9 @@ class LLMClient:
         if context:
             reply = f"基于知识库的回复：\n\n{context[:500]}\n\n（注：当前为规则模式，配置DEEPSEEK_API_KEY或启动本地LLM可启用智能回复）"
         elif any(w in prompt for w in ["你好", "hello", "hi", "嗨"]):
-            reply = "你好！我是标准计算单元2（SCU2），带CUF熵税守卫的智能助手。当前为规则模式，配置DEEPSEEK_API_KEY或启动本地LLM（LM Studio/Ollama）可启用智能回复。"
+            reply = "你好！我是标准计算单元2（SCU3），带CUF熵税守卫的智能助手。当前为规则模式，配置DEEPSEEK_API_KEY或启动本地LLM（LM Studio/Ollama）可启用智能回复。"
         elif any(w in prompt for w in ["你是谁", "介绍", "who"]):
-            reply = "我是SCU2标准计算单元2，采用v3三维度分离架构：数据流×权限层×守卫横切。所有操作经CUF守卫审计，按五维熵税计费。"
+            reply = "我是SCU3标准计算单元2，采用v3三维度分离架构：数据流×权限层×守卫横切。所有操作经CUF守卫审计，按五维熵税计费。"
         elif any(w in prompt for w in ["谢谢", "感谢", "thanks"]):
             reply = "不客气！很高兴能帮到你。"
         elif "?" in prompt or "？" in prompt:

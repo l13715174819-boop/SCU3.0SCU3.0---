@@ -21,7 +21,7 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.nl_selector")
+logger = logging.getLogger("SCU3.m.nl_selector")
 
 
 class NLToolSelector:

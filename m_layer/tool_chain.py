@@ -26,7 +26,7 @@ import logging
 from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.toolchain")
+logger = logging.getLogger("SCU3.m.toolchain")
 
 
 class ToolChain:

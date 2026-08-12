@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-test_full_comprehensive.py — SCU2 v5.2 综合测试套件
+test_full_comprehensive.py — SCU3 v5.2 综合测试套件
 =====================================================
 4 大类 × 3 次 = 12 次测试
 
@@ -30,7 +30,7 @@ sys.path.insert(0, BASE_DIR)
 
 import logging
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("scu2.test.full")
+logger = logging.getLogger("SCU3.test.full")
 
 # 测试结果收集
 _results: List[Dict[str, Any]] = []
@@ -63,8 +63,8 @@ class _LocalHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/" or self.path == "/index.html":
-            body = b"""<!DOCTYPE html><html><head><title>SCU2 Test Page</title></head>
-<body><h1>Hello SCU2</h1><p>This is a local test page.</p>
+            body = b"""<!DOCTYPE html><html><head><title>SCU3 Test Page</title></head>
+<body><h1>Hello SCU3</h1><p>This is a local test page.</p>
 <a href="/article">Article</a><a href="https://example.com">External</a>
 <img src="/img.png" alt="test image"></body></html>"""
             self.send_response(200)
@@ -694,7 +694,7 @@ def print_summary():
 
 def main():
     print("=" * 70)
-    print("  SCU2 v5.2 综合测试套件")
+    print("  SCU3 v5.2 综合测试套件")
     print("  4 大类 × 3 次 = 12 次测试")
     print("  网络测试使用本地 HTTP 服务器（避免外部网络波动）")
     print("=" * 70)

@@ -1,0 +1,24 @@
+﻿{
+  "blueprint_version": "v3.1",
+  "timestamp": "2026-08-12T09:08:26",
+  "description": "SCU3 正式 UI 蓝本 — 所有端（桌面/移动/Web）以此为参考",
+  "changes_from_v3.0": [
+    "renderAI 函数修复：支持 HTML 标签文本（太极图标 SVG）",
+    "对子模式指示器移至顶栏标题后",
+    "对子 API 标签移至顶栏对子指示器后",
+    "思考中动态太极图标正常渲染",
+    "顶栏布局：标题 → 对子 → API标签 → CUF → 本地后端"
+  ],
+  "ui_layout": {
+    "topbar": ["标题", "对子指示器", "API标签(动态)", "CUF指示器", "本地后端", "状态", "刷新"],
+    "sidebar": ["Logo", "导航菜单", "状态指示器"],
+    "main": ["聊天工具栏", "消息区", "系统操作区", "输入区"]
+  },
+  "core_features": {
+    "pair_mode": "Yin-Yang 对子双签模式，分析类问题自动启用",
+    "cuf": "CUF 安全内核，熵税系统",
+    "smart_assistant": "智能助手模式，自动调用工具",
+    "react_mode": "ReAct 推理模式",
+    "stream_output": "流式输出支持"
+  }
+}

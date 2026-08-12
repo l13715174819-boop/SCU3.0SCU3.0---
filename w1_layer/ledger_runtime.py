@@ -30,7 +30,7 @@ from d_layer.axioms import (
 )
 from d_layer.ledger_base import LedgerBase
 
-logger = logging.getLogger("scu2.w1.ledger")
+logger = logging.getLogger("SCU3.w1.ledger")
 
 
 class LedgerRuntime(LedgerBase):
@@ -41,7 +41,7 @@ class LedgerRuntime(LedgerBase):
     """
 
     def __init__(self, initial_budget: float = INITIAL_BUDGET,
-                 store_path: str = "scu2_data/ledger.json"):
+                 store_path: str = "SCU3_data/ledger.json"):
         self.store_path = store_path
         self._lock = threading.RLock()  # 可重入锁，支持嵌套调用
         self._balance = float(initial_budget)
@@ -227,7 +227,7 @@ class LedgerRuntime(LedgerBase):
 
     def replenish(self, amount: float, auth_token: str = "",
                   reason: str = "") -> Tuple[bool, str]:
-        expected = os.environ.get("SCU2_LEDGER_AUTH", "")
+        expected = os.environ.get("SCU3_LEDGER_AUTH", "")
         if expected and auth_token != expected:
             return False, "鉴权失败"
         if amount <= 0 or amount > MAX_SINGLE_TRANSACTION:

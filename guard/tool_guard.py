@@ -17,7 +17,7 @@ from typing import Tuple, Dict, Any
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from d_layer.axioms import Operation, BASE_TAX_RATES
 
-logger = logging.getLogger("scu2.guard.tool")
+logger = logging.getLogger("SCU3.guard.tool")
 
 # 工具类型映射（原则四落地）
 TOOL_TYPE_MAP = {

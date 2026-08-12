@@ -167,12 +167,12 @@ class TestDependencyScanner(unittest.TestCase):
         is_violation, reason = check_a4_violation(violation)
         self.assertFalse(is_violation, "W2→D应被放行")
 
-    def test_scanner_no_violations_in_scu2(self):
-        """SCU2代码库无A4违规"""
+    def test_scanner_no_violations_in_SCU3(self):
+        """SCU3代码库无A4违规"""
         from tools.dependency_scanner import scan_directory
         root = os.path.join(os.path.dirname(__file__), "..")
         results = scan_directory(root)
-        self.assertTrue(results["passed"], f"SCU2有A4违规: {results['violations']}")
+        self.assertTrue(results["passed"], f"SCU3有A4违规: {results['violations']}")
 
 
 if __name__ == "__main__":

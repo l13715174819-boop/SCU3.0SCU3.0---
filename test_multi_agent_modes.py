@@ -15,7 +15,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
-logger = logging.getLogger("scu2.test.modes")
+logger = logging.getLogger("SCU3.test.modes")
 
 from m_layer.multi_agent import (
     MultiAgentCoordinator,
@@ -154,7 +154,7 @@ def test_invalid_mode():
 
 def main():
     print("=" * 60)
-    print("  SCU2 多Agent双模式测试")
+    print("  SCU3 多Agent双模式测试")
     print("=" * 60)
 
     tests = [

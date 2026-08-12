@@ -23,7 +23,7 @@ import threading
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.agent_learn")
+logger = logging.getLogger("SCU3.m.agent_learn")
 
 
 class AgentLearningEngine:
@@ -42,7 +42,7 @@ class AgentLearningEngine:
     def __init__(self, data_dir: Optional[str] = None):
         if data_dir is None:
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            data_dir = os.path.join(base, "scu2_data")
+            data_dir = os.path.join(base, "SCU3_data")
         self._data_dir = data_dir
         os.makedirs(data_dir, exist_ok=True)
         self._state_path = os.path.join(data_dir, self.STATE_FILE)

@@ -16,7 +16,7 @@ import logging
 import threading
 from typing import Dict, Tuple, List
 
-logger = logging.getLogger("scu2.guard.d_integrity")
+logger = logging.getLogger("SCU3.guard.d_integrity")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D_LAYER_DIR = os.path.join(BASE_DIR, "d_layer")

@@ -23,7 +23,7 @@ from d_layer.axioms import (
 # 原则一落地：集成D层完整性校验
 from guard.d_layer_integrity import get_checker as get_d_checker
 
-logger = logging.getLogger("scu2.guard.firewall")
+logger = logging.getLogger("SCU3.guard.firewall")
 
 # A4 校验范围：只管依赖类动作，不管数据流动作（原则二落地）
 DEPENDENCY_ACTIONS = {"import", "modify", "patch", "base_modify", "delete"}

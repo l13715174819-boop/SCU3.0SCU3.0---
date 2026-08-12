@@ -2,12 +2,12 @@
 """
 guard/data_crypto.py — 本地数据字段级加密（P2修复）
 ====================================================
-对 scu2_data/ 下的敏感数据（对话内容、user_id）做字段级加密，
+对 SCU3_data/ 下的敏感数据（对话内容、user_id）做字段级加密，
 防止明文落盘后被直接读取。
 
 策略：
   - 对称加密（AES-256-GCM，使用 cryptography 库；不可用时降级为 XOR+HMAC）
-  - 密钥来源：环境变量 SCU2_DATA_KEY（32字节hex）；未配置则派生自机器标识+项目路径
+  - 密钥来源：环境变量 SCU3_DATA_KEY（32字节hex）；未配置则派生自机器标识+项目路径
   - 字段级加密：仅加密 user_id 和 content，结构字段（session_id/timestamp/role）保留明文以便查询
   - 向前兼容：读取时自动识别加密/明文格式
 """
@@ -17,7 +17,7 @@ import hashlib
 import logging
 from typing import Optional
 
-logger = logging.getLogger("scu2.guard.crypto")
+logger = logging.getLogger("SCU3.guard.crypto")
 
 # 加密标记前缀（识别加密数据）
 _ENC_PREFIX = "ENCv1:"
@@ -30,27 +30,27 @@ def _derive_key() -> bytes:
     """派生加密密钥（32字节）
 
     优先级：
-      1. 环境变量 SCU2_DATA_KEY（hex字符串，64字符=32字节）
+      1. 环境变量 SCU3_DATA_KEY（hex字符串，64字符=32字节）
       2. 基于机器标识+项目根目录派生（开发模式兜底）
     """
     global _cached_key
     if _cached_key is not None:
         return _cached_key
 
-    env_key = os.environ.get("SCU2_DATA_KEY", "")
+    env_key = os.environ.get("SCU3_DATA_KEY", "")
     if env_key:
         try:
             _cached_key = bytes.fromhex(env_key)
             if len(_cached_key) == 32:
-                logger.info("数据加密密钥从 SCU2_DATA_KEY 加载")
+                logger.info("数据加密密钥从 SCU3_DATA_KEY 加载")
                 return _cached_key
         except ValueError:
-            logger.warning("SCU2_DATA_KEY 非法hex，回退到派生密钥")
+            logger.warning("SCU3_DATA_KEY 非法hex，回退到派生密钥")
 
     # 兜底：基于项目路径+用户名派生（开发模式，不安全但比明文好）
     base = os.path.expanduser("~") + "|" + os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    _cached_key = hashlib.sha256(("scu2_data_key::" + base).encode("utf-8")).digest()
-    logger.warning("⚠️ 使用派生密钥（开发模式），生产环境请配置 SCU2_DATA_KEY 环境变量")
+    _cached_key = hashlib.sha256(("SCU3_data_key::" + base).encode("utf-8")).digest()
+    logger.warning("⚠️ 使用派生密钥（开发模式），生产环境请配置 SCU3_DATA_KEY 环境变量")
     return _cached_key
 
 

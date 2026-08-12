@@ -10,7 +10,7 @@ tools/dependency_scanner.py — A4依赖关系扫描器
   - 发现"非白名单反向调用"的A4违规
 
 使用：
-  python tools/dependency_scanner.py [--root scu2/]
+  python tools/dependency_scanner.py [--root SCU3/]
 """
 import os
 import sys
@@ -19,7 +19,7 @@ import json
 import logging
 from typing import List, Dict, Tuple
 
-logger = logging.getLogger("scu2.tools.dep_scanner")
+logger = logging.getLogger("SCU3.tools.dep_scanner")
 
 # 层级优先级（D=0最低，W2=3最高）
 # A4规则：低层不得import高层（依赖方向反向）

@@ -41,7 +41,7 @@ export ERNIE_API_KEY="your-api-key"
 ### 运行
 
 ```bash
-cd scu2
+cd SCU3
 python server.py
 ```
 
@@ -93,7 +93,7 @@ python server.py
 ## 目录结构
 
 ```
-scu2/
+SCU3/
 ├── d_layer/          # D层 - 基线公理
 ├── m_layer/          # M层 - 认知/元认知
 ├── w1_layer/         # W1层 - 记忆/执行

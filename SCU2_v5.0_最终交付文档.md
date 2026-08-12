@@ -1,4 +1,4 @@
-# SCU2 v5.0 最终交付文档
+# SCU3 v5.0 最终交付文档
 ## 标准计算单元2 · 高优先级优化版
 
 > **版本**：v5.0  
@@ -25,7 +25,7 @@
 
 ### 1.1 交付成果
 
-SCU2 v5.0 完成两项高优先级优化：
+SCU3 v5.0 完成两项高优先级优化：
 
 | 优化项 | 交付内容 | 验证结果 |
 |--------|---------|---------|
@@ -160,7 +160,7 @@ v5.0 采用向量相似度 (70%) + BM25 关键词 (30%) 加权融合：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    SCU2 v5.0 架构                        │
+│                    SCU3 v5.0 架构                        │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │  ┌─────────┐    ┌──────────────────────────────────┐   │
@@ -352,7 +352,7 @@ pip install --upgrade pip setuptools wheel
 # 3. 安装 PyTorch (GPU 版本，按官方指南选择 CUDA 版本)
 pip install torch --index-url https://download.pytorch.org/whl/cu128
 
-# 4. 安装 SCU2 核心依赖
+# 4. 安装 SCU3 核心依赖
 pip install fastapi uvicorn pydantic openai
 ```
 
@@ -398,9 +398,9 @@ LOCAL_MODEL_NAME=Qwen/Qwen2.5-7B-Instruct
 LOCAL_MODEL_QUANT=4bit
 LOCAL_MODEL_DEVICE=auto
 
-# ─── SCU2 安全配置（生产环境务必修改）───
-SCU2_API_KEY=your_api_key_here
-SCU2_ADMIN_API_KEY=your_admin_key_here
+# ─── SCU3 安全配置（生产环境务必修改）───
+SCU3_API_KEY=your_api_key_here
+SCU3_ADMIN_API_KEY=your_admin_key_here
 
 # ─── 可选：DeepSeek API（与本地模型二选一）───
 # DEEPSEEK_API_KEY=your_deepseek_key
@@ -427,7 +427,7 @@ $env:LOCAL_MODEL_DEVICE="auto"
 
 ```bash
 # 进入项目目录
-cd scu2
+cd SCU3
 
 # 启动 server
 python -m uvicorn server:app --host 0.0.0.0 --port 8000
@@ -449,40 +449,40 @@ python -m uvicorn server:app --host 0.0.0.0 --port 8000
 
 # 2. 加载本地模型（首次会下载 Qwen 模型约 14GB）
 curl -X POST http://localhost:8000/local-model/load \
-  -H "X-API-Key: scu2_admin_key_2026" \
+  -H "X-API-Key: SCU3_admin_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"model_name":"Qwen/Qwen2.5-7B-Instruct","quantization":"4bit","device":"auto"}'
 
 # 3. 切换到本地模型平台
 curl -X POST http://localhost:8000/llm/switch \
-  -H "X-API-Key: scu2_admin_key_2026" \
+  -H "X-API-Key: SCU3_admin_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"platform":"local_torch"}'
 
 # 4. 验证服务
-curl http://localhost:8000/status -H "X-API-Key: scu2_admin_key_2026"
+curl http://localhost:8000/status -H "X-API-Key: SCU3_admin_key_2026"
 ```
 
 ### 4.5 验证部署
 
 ```bash
 # 1. 健康检查
-curl http://localhost:8000/ -H "X-API-Key: scu2_dev_key_2026"
+curl http://localhost:8000/ -H "X-API-Key: SCU3_dev_key_2026"
 
 # 2. 对话测试
 curl -X POST http://localhost:8000/chat \
-  -H "X-API-Key: scu2_dev_key_2026" \
+  -H "X-API-Key: SCU3_dev_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"prompt":"你好"}'
 
 # 3. 向量库状态
-curl http://localhost:8000/vector/status -H "X-API-Key: scu2_admin_key_2026"
+curl http://localhost:8000/vector/status -H "X-API-Key: SCU3_admin_key_2026"
 
 # 4. 本地模型状态
-curl http://localhost:8000/local-model/status -H "X-API-Key: scu2_admin_key_2026"
+curl http://localhost:8000/local-model/status -H "X-API-Key: SCU3_admin_key_2026"
 
 # 5. LLM 平台状态
-curl http://localhost:8000/llm/status -H "X-API-Key: scu2_admin_key_2026"
+curl http://localhost:8000/llm/status -H "X-API-Key: SCU3_admin_key_2026"
 ```
 
 ---
@@ -496,29 +496,29 @@ curl http://localhost:8000/llm/status -H "X-API-Key: scu2_admin_key_2026"
 ```bash
 # 单条添加
 curl -X POST http://localhost:8000/knowledge/add \
-  -H "X-API-Key: scu2_dev_key_2026" \
+  -H "X-API-Key: SCU3_dev_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"content":"新知识内容","source":"manual"}'
 
 # 批量导入（从文件）
 curl -X POST http://localhost:8000/knowledge/import \
-  -H "X-API-Key: scu2_admin_key_2026" \
+  -H "X-API-Key: SCU3_admin_key_2026" \
   -H "Content-Type: application/json" \
-  -d '{"file_path":"scu2_data/knowledge/docs.txt"}'
+  -d '{"file_path":"SCU3_data/knowledge/docs.txt"}'
 ```
 
 #### 5.1.2 从 TF-IDF 迁移
 
 ```bash
 curl -X POST http://localhost:8000/vector/migrate \
-  -H "X-API-Key: scu2_admin_key_2026"
+  -H "X-API-Key: SCU3_admin_key_2026"
 ```
 
 #### 5.1.3 查询知识
 
 ```bash
 curl -X GET "http://localhost:8000/knowledge/search?query=向量数据库&top_k=3" \
-  -H "X-API-Key: scu2_dev_key_2026"
+  -H "X-API-Key: SCU3_dev_key_2026"
 ```
 
 ### 5.2 模型管理
@@ -528,17 +528,17 @@ curl -X GET "http://localhost:8000/knowledge/search?query=向量数据库&top_k=
 ```bash
 # 加载模型
 curl -X POST http://localhost:8000/local-model/load \
-  -H "X-API-Key: scu2_admin_key_2026" \
+  -H "X-API-Key: SCU3_admin_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"model_name":"Qwen/Qwen2.5-7B-Instruct","quantization":"4bit","device":"auto"}'
 
 # 卸载模型（释放显存）
 curl -X POST http://localhost:8000/local-model/unload \
-  -H "X-API-Key: scu2_admin_key_2026"
+  -H "X-API-Key: SCU3_admin_key_2026"
 
 # 健康检查
 curl -X GET http://localhost:8000/local-model/health \
-  -H "X-API-Key: scu2_admin_key_2026"
+  -H "X-API-Key: SCU3_admin_key_2026"
 ```
 
 #### 5.2.2 平台切换
@@ -546,13 +546,13 @@ curl -X GET http://localhost:8000/local-model/health \
 ```bash
 # 切换到本地模型
 curl -X POST http://localhost:8000/llm/switch \
-  -H "X-API-Key: scu2_admin_key_2026" \
+  -H "X-API-Key: SCU3_admin_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"platform":"local_torch"}'
 
 # 切换回 DeepSeek
 curl -X POST http://localhost:8000/llm/switch \
-  -H "X-API-Key: scu2_admin_key_2026" \
+  -H "X-API-Key: SCU3_admin_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"platform":"deepseek"}'
 ```
@@ -612,7 +612,7 @@ nvidia-smi
 
 # 2. 使用更激进的量化
 curl -X POST http://localhost:8000/local-model/load \
-  -H "X-API-Key: scu2_admin_key_2026" \
+  -H "X-API-Key: SCU3_admin_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"model_name":"Qwen/Qwen2.5-7B-Instruct","quantization":"4bit","device":"cpu"}'
 # 或使用更小的模型: Qwen/Qwen2.5-3B-Instruct (仅需 2.5GB)
@@ -625,11 +625,11 @@ curl -X POST http://localhost:8000/local-model/load \
 **解决**：
 ```bash
 # 1. 检查平台
-curl http://localhost:8000/llm/status -H "X-API-Key: scu2_admin_key_2026"
+curl http://localhost:8000/llm/status -H "X-API-Key: SCU3_admin_key_2026"
 
 # 2. 切换平台
 curl -X POST http://localhost:8000/llm/switch \
-  -H "X-API-Key: scu2_admin_key_2026" \
+  -H "X-API-Key: SCU3_admin_key_2026" \
   -H "Content-Type: application/json" \
   -d '{"platform":"local_torch"}'
 ```
@@ -645,10 +645,10 @@ curl -X POST http://localhost:8000/llm/switch \
 | 日志 | 路径 | 说明 |
 |------|------|------|
 | Server 日志 | stdout (控制台) | uvicorn 输出 |
-| 知识库数据 | scu2_data/knowledge/ | 向量索引+文档 |
-| 模型配置 | scu2_data/local_model_config.json | 模型加载配置 |
-| 账本数据 | scu2_data/ledger.json | E点交易记录 |
-| 备份 | scu2_data/backups/ | 代码自修改备份 |
+| 知识库数据 | SCU3_data/knowledge/ | 向量索引+文档 |
+| 模型配置 | SCU3_data/local_model_config.json | 模型加载配置 |
+| 账本数据 | SCU3_data/ledger.json | E点交易记录 |
+| 备份 | SCU3_data/backups/ | 代码自修改备份 |
 
 ---
 
@@ -722,7 +722,7 @@ curl -X POST http://localhost:8000/llm/switch \
 
 ## 文档信息
 
-- **作者**：SCU2 自动化交付
+- **作者**：SCU3 自动化交付
 - **审核**：基于 v5.0 运行时验证数据
 - **版本历史**：
   - v5.0 (2026-08-10): 向量数据库 + 本地模型集成（7B 升级版）
@@ -732,5 +732,5 @@ curl -X POST http://localhost:8000/llm/switch \
 
 ---
 
-*本文档基于 SCU2 v5.0 实际运行时验证数据生成，所有性能指标均来自真实测试环境。*
+*本文档基于 SCU3 v5.0 实际运行时验证数据生成，所有性能指标均来自真实测试环境。*
 *模型升级说明：从 Qwen2.5-3B-Instruct 升级至 Qwen2.5-7B-Instruct（4bit），复杂代码和逻辑推理能力显著提升，显存占用 7GB（仍有 9GB 余量）。*

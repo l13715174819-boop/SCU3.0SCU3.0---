@@ -17,7 +17,7 @@ from typing import Dict, Any
 
 from guard.yin_yang_base import YinYangEndorser
 
-logger = logging.getLogger("scu2.m.cognition_endorser")
+logger = logging.getLogger("SCU3.m.cognition_endorser")
 
 
 class CognitionEndorser(YinYangEndorser):

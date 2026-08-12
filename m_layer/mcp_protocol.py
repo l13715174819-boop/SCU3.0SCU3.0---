@@ -2,15 +2,15 @@
 """
 m_layer/mcp_protocol.py — MCP（Model Context Protocol）协议支持模块
 ================================================================
-实现MCP协议客户端和服务端，支持SCU2工具以MCP标准对外暴露，
+实现MCP协议客户端和服务端，支持SCU3工具以MCP标准对外暴露，
 并连接外部MCP服务器扩展能力边界。
 
 功能：
   1. MCPClient：连接外部MCP服务器，列出/调用远程工具，订阅/读取资源，自动重连
-  2. MCPServer：把SCU2本地工具（action.py 13种 + extended_tools.py 扩展工具）暴露为MCP服务
+  2. MCPServer：把SCU3本地工具（action.py 13种 + extended_tools.py 扩展工具）暴露为MCP服务
   3. JSON-RPC 2.0 消息格式实现
   4. MCPRegistry：多服务器连接管理、工具路由（本地优先远程兜底）、健康检查、故障转移
-  5. 状态持久化到 scu2_data/mcp_state.json
+  5. 状态持久化到 SCU3_data/mcp_state.json
 
 消息格式（JSON-RPC 2.0）：
   请求: {"jsonrpc": "2.0", "id": "xxx", "method": "tools/list", "params": {...}}
@@ -30,11 +30,11 @@ import urllib.request
 import urllib.error
 from typing import Dict, Any, Optional, List, Callable, Tuple
 
-logger = logging.getLogger("scu2.m.mcp")
+logger = logging.getLogger("SCU3.m.mcp")
 
 # 项目根目录与数据目录
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 STATE_FILE = os.path.join(DATA_DIR, "mcp_state.json")
 
 # JSON-RPC 2.0 标准错误码
@@ -99,7 +99,7 @@ def _http_post_json(url: str, payload: Dict, api_key: Optional[str] = None,
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "User-Agent": f"SCU2-MCP/1.0 (protocol={MCP_PROTOCOL_VERSION})",
+        "User-Agent": f"SCU3-MCP/1.0 (protocol={MCP_PROTOCOL_VERSION})",
     }
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
@@ -389,7 +389,7 @@ class MCPClient:
             resp = self._send_rpc("initialize", {
                 "protocolVersion": MCP_PROTOCOL_VERSION,
                 "capabilities": {"tools": {}, "resources": {}},
-                "clientInfo": {"name": "scu2-mcp-client", "version": "1.0"},
+                "clientInfo": {"name": "SCU3-mcp-client", "version": "1.0"},
             })
             if "error" in resp:
                 logger.warning(f"[{self.name}] MCP连接握手失败: {resp['error'].get('message')}")
@@ -466,7 +466,7 @@ class MCPClient:
         """订阅资源
 
         Args:
-            resource_uri: 资源URI（如 "file:///path" 或 "scu2://knowledge/xxx"）
+            resource_uri: 资源URI（如 "file:///path" 或 "SCU3://knowledge/xxx"）
 
         Returns:
             是否订阅成功
@@ -575,7 +575,7 @@ class MCPClient:
 class MCPServer:
     """MCP协议服务端
 
-    把SCU2本地工具暴露为MCP服务，处理JSON-RPC 2.0请求。
+    把SCU3本地工具暴露为MCP服务，处理JSON-RPC 2.0请求。
 
     用法:
         server = MCPServer()
@@ -593,7 +593,7 @@ class MCPServer:
         self._initialized: bool = False
 
     def register_local_tools(self) -> int:
-        """注册SCU2本地工具（action.py 13种 + extended_tools.py 扩展工具）
+        """注册SCU3本地工具（action.py 13种 + extended_tools.py 扩展工具）
 
         Returns:
             注册的工具数量
@@ -674,7 +674,7 @@ class MCPServer:
                 "tools": {"listChanged": True},
                 "resources": {"subscribe": True, "listChanged": True},
             },
-            "serverInfo": {"name": "scu2-mcp-server", "version": "1.0"},
+            "serverInfo": {"name": "SCU3-mcp-server", "version": "1.0"},
         }
 
     def _handle_ping(self, params: Dict) -> Dict[str, Any]:
@@ -698,7 +698,7 @@ class MCPServer:
             raise ValueError(f"未知工具: {tool_name}")
         handler = self._tool_handlers[tool_name]
         result = handler(arguments)
-        # 将SCU2工具结果转换为MCP标准content格式
+        # 将SCU3工具结果转换为MCP标准content格式
         if isinstance(result, dict) and result.get("success"):
             content = [{"type": "text", "text": json.dumps(result.get("result", result),
                                                            ensure_ascii=False)}]
@@ -791,7 +791,7 @@ class MCPServer:
     def get_server_info(self) -> Dict[str, Any]:
         """获取服务端信息"""
         return {
-            "name": "scu2-mcp-server",
+            "name": "SCU3-mcp-server",
             "version": "1.0",
             "protocolVersion": MCP_PROTOCOL_VERSION,
             "toolsCount": len(self._tool_schemas),
@@ -844,7 +844,7 @@ class MCPRegistry:
     # ─── 本地工具 ────────────────────────────────────
 
     def register_local_tools(self) -> int:
-        """注册SCU2本地工具到MCP服务端"""
+        """注册SCU3本地工具到MCP服务端"""
         count = self._server.register_local_tools()
         # 更新工具路由表：本地工具优先
         for schema in self._server._tool_schemas:
@@ -1059,7 +1059,7 @@ class MCPRegistry:
     # ─── 状态持久化 ────────────────────────────────────
 
     def _save_state(self) -> None:
-        """持久化状态到 scu2_data/mcp_state.json"""
+        """持久化状态到 SCU3_data/mcp_state.json"""
         state = {
             "remote_servers": [],
             "tool_routing": {},
@@ -1085,7 +1085,7 @@ class MCPRegistry:
             logger.warning(f"保存MCP状态失败: {e}")
 
     def _load_state(self) -> None:
-        """从 scu2_data/mcp_state.json 加载状态"""
+        """从 SCU3_data/mcp_state.json 加载状态"""
         if not os.path.exists(STATE_FILE):
             return
         try:

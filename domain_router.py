@@ -19,7 +19,7 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 
-logger = logging.getLogger("scu2.w1.domain_router")
+logger = logging.getLogger("SCU3.w1.domain_router")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLUGIN_DIR = os.path.join(BASE_DIR, "domain_plugins")

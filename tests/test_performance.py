@@ -2,7 +2,7 @@
 """
 tests/test_performance.py — 性能基线测试
 =========================================
-验证SCU2基本性能指标。
+验证SCU3基本性能指标。
 """
 import os
 import sys

@@ -31,7 +31,7 @@ import threading
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.selfmod")
+logger = logging.getLogger("SCU3.m.selfmod")
 
 
 # ─── D层保护：这些文件绝对不可被自修改触碰 ────────────────────
@@ -97,7 +97,7 @@ class CodeSelfModifier:
     def __init__(self, project_root: str, backup_dir: str = "",
                  ledger=None, require_human_approval: bool = True):
         self.project_root = os.path.abspath(project_root)
-        self.backup_dir = backup_dir or os.path.join(self.project_root, "scu2_data", "backups")
+        self.backup_dir = backup_dir or os.path.join(self.project_root, "SCU3_data", "backups")
         self.ledger = ledger
         self.require_human_approval = require_human_approval
 
@@ -113,7 +113,7 @@ class CodeSelfModifier:
     # ─── 状态持久化 ────────────────────────────────
 
     def _state_path(self) -> str:
-        return os.path.join(self.project_root, "scu2_data", "self_modify_state.json")
+        return os.path.join(self.project_root, "SCU3_data", "self_modify_state.json")
 
     def _load_state(self):
         path = self._state_path()

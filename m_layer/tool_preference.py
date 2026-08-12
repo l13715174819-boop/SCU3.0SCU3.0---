@@ -21,7 +21,7 @@ import threading
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.tool_pref")
+logger = logging.getLogger("SCU3.m.tool_pref")
 
 
 class ToolPreferenceLearner:
@@ -40,7 +40,7 @@ class ToolPreferenceLearner:
     def __init__(self, data_dir: Optional[str] = None):
         if data_dir is None:
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            data_dir = os.path.join(base, "scu2_data")
+            data_dir = os.path.join(base, "SCU3_data")
         self._data_dir = data_dir
         self._state_path = os.path.join(data_dir, self.STATE_FILE)
 

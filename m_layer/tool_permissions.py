@@ -13,7 +13,7 @@ m_layer/tool_permissions.py — 工具权限分级管理（M层）
   4. 危险操作审批机制 require_approval(tool_name, user_id)
   5. 权限提升申请 apply_elevation(user_id, requested_level, reason)
   6. 权限审计日志记录
-  7. 状态持久化到 scu2_data/tool_permissions.json
+  7. 状态持久化到 SCU3_data/tool_permissions.json
 
 架构归属：M层（权限管理层）
 依赖：无（纯本地状态）
@@ -26,7 +26,7 @@ import threading
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.tool_perm")
+logger = logging.getLogger("SCU3.m.tool_perm")
 
 # ─── 权限等级定义 ────────────────────────────────
 # 4级权限分级：L0 < L1 < L2 < L3
@@ -92,7 +92,7 @@ class ToolPermissionManager:
     def __init__(self, data_dir: Optional[str] = None):
         if data_dir is None:
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            data_dir = os.path.join(base, "scu2_data")
+            data_dir = os.path.join(base, "SCU3_data")
         self._data_dir = data_dir
         os.makedirs(self._data_dir, exist_ok=True)
         self._state_path = os.path.join(self._data_dir, "tool_permissions.json")

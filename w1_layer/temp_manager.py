@@ -26,7 +26,7 @@ import threading
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-logger = logging.getLogger("scu2.w1.temp")
+logger = logging.getLogger("SCU3.w1.temp")
 
 
 class TempManager:
@@ -47,7 +47,7 @@ class TempManager:
     def __init__(self, sandbox_dir: Optional[str] = None):
         if sandbox_dir is None:
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            sandbox_dir = os.path.join(base, "scu2_data", "sandbox")
+            sandbox_dir = os.path.join(base, "SCU3_data", "sandbox")
         self._sandbox_dir = os.path.abspath(sandbox_dir)
         os.makedirs(self._sandbox_dir, exist_ok=True)
 

@@ -30,7 +30,7 @@ import threading
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
 
-logger = logging.getLogger("scu2.m.learning")
+logger = logging.getLogger("SCU3.m.learning")
 
 
 class SelfLearningEngine:
@@ -60,7 +60,7 @@ class SelfLearningEngine:
         self.knowledge = knowledge_store
         self.feedback = feedback_collector
         self.content_filter = content_filter
-        self.data_dir = data_dir or os.path.join(os.getcwd(), "scu2_data")
+        self.data_dir = data_dir or os.path.join(os.getcwd(), "SCU3_data")
         self._lock = threading.Lock()
 
         # 学习状态

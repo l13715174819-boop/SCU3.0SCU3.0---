@@ -37,11 +37,11 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-logger = logging.getLogger("scu2.w1.ext_tools")
+logger = logging.getLogger("SCU3.w1.ext_tools")
 
 # 项目根目录
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 SANDBOX_DIR = os.path.join(DATA_DIR, "sandbox")
 os.makedirs(SANDBOX_DIR, exist_ok=True)
 

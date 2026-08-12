@@ -15,7 +15,7 @@ from typing import List, Dict, Any, Optional
 
 from w1_layer.memory.schemas import L3EpisodicMemory
 
-logger = logging.getLogger("scu2.w1.memory.l3")
+logger = logging.getLogger("SCU3.w1.memory.l3")
 
 
 class L3EpisodicStore:
@@ -24,7 +24,7 @@ class L3EpisodicStore:
     def __init__(self, db_path: str = ""):
         if not db_path:
             base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            db_path = os.path.join(base, "scu2_data", "memory", "memory_l3.db")
+            db_path = os.path.join(base, "SCU3_data", "memory", "memory_l3.db")
         self.db_path = db_path
         os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
         self._lock = threading.Lock()

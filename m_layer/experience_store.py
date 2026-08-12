@@ -11,7 +11,7 @@ m_layer/experience_store.py — 经验存储与预加载（M层）
   4. 强化：每次成功 success_count+1，次数越高优先级越高
   5. 衰减：长时间未用的经验降权（>30天）
 
-存储格式（scu2_data/experiences.json）：
+存储格式（SCU3_data/experiences.json）：
   {
     "experiences": [
       {
@@ -38,10 +38,10 @@ import threading
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 
-logger = logging.getLogger("scu2.m.experience")
+logger = logging.getLogger("SCU3.m.experience")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 EXP_PATH = os.path.join(DATA_DIR, "experiences.json")
 
 

@@ -22,11 +22,11 @@ import logging
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
-logger = logging.getLogger("scu2.w1.action")
+logger = logging.getLogger("SCU3.w1.action")
 
 # 项目根目录（限制文件操作范围）
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 SANDBOX_DIR = os.path.join(DATA_DIR, "sandbox")
 os.makedirs(SANDBOX_DIR, exist_ok=True)
 
@@ -142,8 +142,14 @@ class ActionLayer:
         m = re.search(r"(?:股票|stock)\s*([A-Za-z]{1,5})", text, re.I)
         if m:
             return {"tool": "stock_price", "params": {"code": m.group(1).upper()}, "tool_type": "read"}
-        # 9. GitHub搜索
-        m = re.search(r"(?:github|搜索仓库)\s*(.+)", text, re.I)
+        # 8.5 二维码生成（需插件市场）— 提前到 github_search 之前，避免含 github.com 的二维码文本被误判
+        m = re.search(r"(?:生成|创建|制作)\s*(?:一个)?\s*二维码\s*(.+)?", text, re.I)
+        if m:
+            return {"tool": "qrcode_gen", "params": {"text": m.group(1) or "SCU3"}, "tool_type": "read"}
+        if re.search(r"识别二维码|扫描二维码|decode qrcode", text, re.I):
+            return {"tool": "qrcode_gen", "params": {"text": "decode"}, "tool_type": "read"}
+        # 9. GitHub搜索（排除URL场景，避免把 github.com 链接当搜索词）
+        m = re.search(r"(?:github|搜索仓库)\s+(?!.*https?://)(.+)", text, re.I)
         if m:
             return {"tool": "github_search", "params": {"query": m.group(1).strip()}, "tool_type": "read"}
         # 14. 联网搜索（DuckDuckGo，无需API Key）
@@ -189,12 +195,6 @@ class ActionLayer:
             code = re.sub(r"^(?:运行代码|run|exec)\s*", "", text, flags=re.I)
             if code:
                 return {"tool": "code_run", "params": {"code": code}, "tool_type": "write"}
-        # 14. 二维码生成（需插件市场）
-        m = re.search(r"(?:生成|创建|制作)\s*(?:一个)?\s*二维码\s*(.+)?", text, re.I)
-        if m:
-            return {"tool": "qrcode_gen", "params": {"text": m.group(1) or "SCU2"}, "tool_type": "read"}
-        if re.search(r"识别二维码|扫描二维码|decode qrcode", text, re.I):
-            return {"tool": "qrcode_gen", "params": {"text": "decode"}, "tool_type": "read"}
         # 15. 图片处理（需插件市场）
         m = re.search(r"(?:处理|缩放|裁剪|转换)\s*(\S+\.(?:png|jpg|jpeg|gif|bmp))", text, re.I)
         if m:
@@ -203,15 +203,25 @@ class ActionLayer:
         m = re.search(r"(?:翻译|translate)\s+(.+)", text, re.I)
         if m:
             text_to_translate = m.group(1).strip()
-            # 检测目标语言
+            # 智能检测目标语言：优先用户显式指定，否则按文本语言自动判断
             target = "en"
+            source = "auto"
             if "中文" in text or "汉语" in text:
                 target = "zh-CN"
             elif "英文" in text or "英语" in text:
                 target = "en"
             elif "日文" in text or "日语" in text:
                 target = "ja"
-            return {"tool": "translate", "params": {"text": text_to_translate, "target": target}, "tool_type": "read"}
+            else:
+                # 自动判断：中文为主→翻译成英文，英文为主→翻译成中文
+                cjk_count = sum(1 for c in text_to_translate if '\u4e00' <= c <= '\u9fff')
+                if cjk_count > len(text_to_translate) * 0.3:
+                    target = "en"
+                    source = "zh-CN"
+                else:
+                    target = "zh-CN"
+                    source = "en"
+            return {"tool": "translate", "params": {"text": text_to_translate, "source": source, "target": target}, "tool_type": "read"}
         # 17. Markdown 渲染（需插件市场）
         m = re.search(r"(?:渲染|转换)\s*(?:markdown|md)\s*(?:为|to)\s*(html|pdf)", text, re.I)
         if m:

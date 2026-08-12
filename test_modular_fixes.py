@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
-logger = logging.getLogger("scu2.test.fixes")
+logger = logging.getLogger("SCU3.test.fixes")
 
 
 def test_1_plugin_hooks_triggered():
@@ -268,7 +268,7 @@ def test_7_env_config_drive_modules():
     print("=" * 60)
 
     # 设置环境变量
-    os.environ["SCU2_DISABLED_MODULES"] = "automation.screen,automation.desktop"
+    os.environ["SCU3_DISABLED_MODULES"] = "automation.screen,automation.desktop"
 
     # 重新注册
     from m_layer.module_registry import ModuleRegistry
@@ -285,7 +285,7 @@ def test_7_env_config_drive_modules():
         reg.register(name, f"测试模块 {name}", loader=dummy_loader)
 
     # 模拟 register_builtin_modules 末尾的 .env 读取逻辑
-    disabled_env = os.environ.get("SCU2_DISABLED_MODULES", "").strip()
+    disabled_env = os.environ.get("SCU3_DISABLED_MODULES", "").strip()
     if disabled_env:
         disabled_list = [m.strip() for m in disabled_env.split(",") if m.strip()]
         for mod_name in disabled_list:
@@ -298,20 +298,20 @@ def test_7_env_config_drive_modules():
     assert reg._modules["automation.desktop"].disabled, "desktop 应被禁用"
     assert not reg._modules["automation.web_scraper"].disabled, "scraper 不应被禁用"
 
-    print("  ✓ SCU2_DISABLED_MODULES 正确禁用指定模块")
+    print("  ✓ SCU3_DISABLED_MODULES 正确禁用指定模块")
     print(f"    browser: disabled={reg._modules['automation.browser'].disabled}")
     print(f"    screen:  disabled={reg._modules['automation.screen'].disabled}")
     print(f"    desktop: disabled={reg._modules['automation.desktop'].disabled}")
     print(f"    scraper: disabled={reg._modules['automation.web_scraper'].disabled}")
 
     # 清理
-    del os.environ["SCU2_DISABLED_MODULES"]
+    del os.environ["SCU3_DISABLED_MODULES"]
     return True
 
 
 def main():
     print("=" * 60)
-    print("  SCU2 模块化可插拔性修复验证")
+    print("  SCU3 模块化可插拔性修复验证")
     print("=" * 60)
 
     tests = [

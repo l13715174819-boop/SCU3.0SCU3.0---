@@ -12,7 +12,7 @@ m_layer/voice_io.py — 语音输入输出模块（M层）
   3. SpeechSynthesizer 语音合成（pyttsx3 / 系统 TTS / 简单蜂鸣音）
   4. 音频处理工具：record / play / adjust_volume / 噪声抑制
   5. 离线命令识别（降级方案，基于音频特征匹配预定义命令）
-  6. 合成结果缓存到 scu2_data/voice_cache.json
+  6. 合成结果缓存到 SCU3_data/voice_cache.json
 
 降级策略：
   - speech_recognition 不可用 → 离线命令识别
@@ -39,11 +39,11 @@ import tempfile
 import subprocess
 from typing import Dict, Any, Optional, List, Tuple, Iterator
 
-logger = logging.getLogger("scu2.m.voice")
+logger = logging.getLogger("SCU3.m.voice")
 
 # 项目根目录与数据目录
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 CACHE_PATH = os.path.join(DATA_DIR, "voice_cache.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -1240,12 +1240,12 @@ class ContinuousListener:
 
     支持两种模式：
       1. 直通模式：检测到任何语音段即识别并回调
-      2. 唤醒词模式：先识别唤醒词（如"嘿 SCU2"），命中后再识别命令
+      2. 唤醒词模式：先识别唤醒词（如"嘿 SCU3"），命中后再识别命令
 
     用法：
         listener = ContinuousListener()
         listener.on_utterance = my_callback  # callback(text: str)
-        listener.start(wake_word="嘿 SCU2")
+        listener.start(wake_word="嘿 SCU3")
         # ... 持续监听中 ...
         listener.stop()
 
@@ -1324,7 +1324,7 @@ class ContinuousListener:
         """启动后台监听
 
         Args:
-            wake_word: 唤醒词（如 "嘿 SCU2"）。为 None 则直通模式
+            wake_word: 唤醒词（如 "嘿 SCU3"）。为 None 则直通模式
             language: 识别语言
             device_index: 麦克风设备索引（为空用默认）
 

@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def main():
     print("=" * 60)
-    print("SCU2 阶段1 门槛验证")
+    print("SCU3 阶段1 门槛验证")
     print("=" * 60)
 
     results = []

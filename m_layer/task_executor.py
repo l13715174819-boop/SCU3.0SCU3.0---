@@ -32,7 +32,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.executor")
+logger = logging.getLogger("SCU3.m.executor")
 
 
 class TaskExecutor:

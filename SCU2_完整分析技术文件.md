@@ -1,4 +1,4 @@
-# SCU2 完整分析技术文件
+# SCU3 完整分析技术文件
 
 **生成时间**: 2026-08-11  
 **版本**: v5.4 (3轮8类检查后)  
@@ -8,7 +8,7 @@
 
 ## 一、系统概述
 
-SCU2（标准计算单元2）是基于CUF（Cross-layer Universal Framework）架构的智能Agent系统，实现了三维度分离设计：
+SCU3（标准计算单元2）是基于CUF（Cross-layer Universal Framework）架构的智能Agent系统，实现了三维度分离设计：
 
 - **数据流维度**: 感知(W2) → 记忆(W1) → 执行(W1) → 认知(M) → 元认知(M) → 输出
 - **守卫维度**: ① W2→W1跨层 ② W1→M跨层 ③ 工具守卫 ④ 周期审计 ⑤ 内容过滤
@@ -62,7 +62,7 @@ SCU2（标准计算单元2）是基于CUF（Cross-layer Universal Framework）�
 | 卸载后503 | ✅ require_module() 35个端点 |
 | disabled持久化 | ✅ _pending_state 恢复机制 |
 | 单例重置 | ✅ reset_browser/screen/scraper/desktop |
-| .env配置驱动 | ✅ SCU2_DISABLED_MODULES / SCU2_ENABLED_ONLY |
+| .env配置驱动 | ✅ SCU3_DISABLED_MODULES / SCU3_ENABLED_ONLY |
 | knowledge.base | ✅ 正确引用 get_store + unloader |
 
 ### 本轮修复项
@@ -151,4 +151,4 @@ SCU2（标准计算单元2）是基于CUF（Cross-layer Universal Framework）�
 
 ## 十、结论
 
-SCU2经过3轮8类检查，**架构合规、模块化可插拔、数据流通畅、安全防护健全、功能硬实现**。本轮共修复8项关键问题，系统从"有形无神"提升到"形神兼备"状态。
+SCU3经过3轮8类检查，**架构合规、模块化可插拔、数据流通畅、安全防护健全、功能硬实现**。本轮共修复8项关键问题，系统从"有形无神"提升到"形神兼备"状态。

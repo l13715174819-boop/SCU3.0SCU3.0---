@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SCU2 一键启动器（轻量版）
+SCU3 一键启动器（轻量版）
 ========================
 功能：
   1. 自动查找系统 Python 环境
@@ -39,7 +39,7 @@ FROZEN = getattr(sys, "frozen", False)
 
 # 定位工作目录
 if FROZEN:
-    # exe 所在目录（启动器放在 SCU2 项目根目录下）
+    # exe 所在目录（启动器放在 SCU3 项目根目录下）
     BASE_DIR = os.path.dirname(sys.executable)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -104,23 +104,23 @@ def find_python() -> str:
     return ""
 
 
-def find_scu2_project(python_path: str) -> str:
-    """查找 SCU2 项目目录（包含 server.py 的目录）"""
+def find_SCU3_project(python_path: str) -> str:
+    """查找 SCU3 项目目录（包含 server.py 的目录）"""
     # 1. exe 同目录
     if os.path.isfile(os.path.join(BASE_DIR, "server.py")):
         return BASE_DIR
 
-    # 2. exe 同级下的 scu2 子目录
-    sub = os.path.join(BASE_DIR, "scu2")
+    # 2. exe 同级下的 SCU3 子目录
+    sub = os.path.join(BASE_DIR, "SCU3")
     if os.path.isfile(os.path.join(sub, "server.py")):
         return sub
 
-    # 3. 通过 Python 查找 scu2 包位置
+    # 3. 通过 Python 查找 SCU3 包位置
     if python_path:
         try:
             result = subprocess.run(
                 [python_path, "-c",
-                 "import scu2; import os; print(os.path.dirname(scu2.__file__))"],
+                 "import SCU3; import os; print(os.path.dirname(SCU3.__file__))"],
                 capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0 and result.stdout.strip():
@@ -132,9 +132,9 @@ def find_scu2_project(python_path: str) -> str:
 
     # 4. 常见路径
     common = [
-        os.path.expanduser(r"~\Desktop\scu2"),
+        os.path.expanduser(r"~\Desktop\SCU3"),
         os.path.expanduser(r"~\Desktop\scu_v5.2"),
-        os.path.expanduser(r"~\AppData\scu2"),
+        os.path.expanduser(r"~\AppData\SCU3"),
     ]
     for p in common:
         if os.path.isfile(os.path.join(p, "server.py")):
@@ -212,7 +212,7 @@ def stream_output(process: subprocess.Popen):
 
 def main():
     print("=" * 60)
-    print("  SCU2 一键启动器")
+    print("  SCU3 一键启动器")
     print("  Smart Computing Unit 2 - One-Click Launcher")
     print("=" * 60)
     print(f"[启动器] 运行模式: {'打包版(exe)' if FROZEN else '开发版(python)'}")
@@ -234,18 +234,18 @@ def main():
         input("按回车键退出...")
         return 1
 
-    # 查找 SCU2 项目目录
-    project_dir = find_scu2_project(python_path)
+    # 查找 SCU3 项目目录
+    project_dir = find_SCU3_project(python_path)
     if not project_dir:
         if FROZEN:
-            print("[启动器] 错误：未找到 SCU2 项目（server.py）")
-            print("[启动器] 请将本启动器放到 SCU2 项目根目录（包含 server.py 的目录）")
+            print("[启动器] 错误：未找到 SCU3 项目（server.py）")
+            print("[启动器] 请将本启动器放到 SCU3 项目根目录（包含 server.py 的目录）")
         else:
             print(f"[启动器] 错误：在 {BASE_DIR} 未找到 server.py")
         input("按回车键退出...")
         return 1
 
-    print(f"[启动器] SCU2 项目目录: {project_dir}")
+    print(f"[启动器] SCU3 项目目录: {project_dir}")
     print(f"[启动器] Python: {python_path}")
 
     # 检查 uvicorn 是否安装
@@ -262,8 +262,8 @@ def main():
         print(f"[启动器] 检查 uvicorn 失败：{e}")
 
     # 启动后端服务
-    # 安全：默认监听127.0.0.1，避免局域网暴露；如需远程访问通过SCU2_HOST环境变量配置
-    bind_host = os.environ.get("SCU2_HOST", "127.0.0.1")
+    # 安全：默认监听127.0.0.1，避免局域网暴露；如需远程访问通过SCU3_HOST环境变量配置
+    bind_host = os.environ.get("SCU3_HOST", "127.0.0.1")
     print(f"[启动器] 正在启动后端服务（uvicorn server:app @ {bind_host}:{PORT}）...")
     if bind_host in ("0.0.0.0", "::"):
         print(f"[启动器] ⚠️ 警告：监听 {bind_host} 将暴露至所有网卡，仅开发测试用！")
@@ -315,7 +315,7 @@ def main():
     open_browser()
 
     print("\n" + "=" * 60)
-    print("  SCU2 服务已启动")
+    print("  SCU3 服务已启动")
     print(f"  访问地址: {BROWSER_URL}")
     print("  按 Ctrl+C 或关闭此窗口可停止服务")
     print("=" * 60 + "\n")

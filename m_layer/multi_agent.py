@@ -46,7 +46,7 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_compl
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.multi_agent")
+logger = logging.getLogger("SCU3.m.multi_agent")
 
 # 确保项目根目录在 sys.path 中（进程模式子进程需要）
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -13,7 +13,7 @@ import sys
 import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("scu2.test.v5.2")
+logger = logging.getLogger("SCU3.test.v5.2")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
@@ -340,7 +340,7 @@ def test_builtin_modules_registration():
 
 def main():
     print("=" * 60)
-    print("SCU2 v5.2 — 语音监听 + 模块管理 集成测试")
+    print("SCU3 v5.2 — 语音监听 + 模块管理 集成测试")
     print("=" * 60)
 
     tests = [

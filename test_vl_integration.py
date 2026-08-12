@@ -25,7 +25,7 @@ import logging
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("scu2.test.vl")
+logger = logging.getLogger("SCU3.test.vl")
 
 # 项目根目录
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -280,7 +280,7 @@ def test_to_llm_compatible_vl():
 
 def main():
     print("=" * 60)
-    print("SCU2 v5.1 — Qwen2.5-VL-7B 视觉模型集成测试")
+    print("SCU3 v5.1 — Qwen2.5-VL-7B 视觉模型集成测试")
     print("方案 A：文本/VL 模型按需切换，不同时加载")
     print("=" * 60)
 

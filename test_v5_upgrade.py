@@ -38,7 +38,7 @@ print("  后端升级验证: PASS")
 print("\n[3] 添加测试文档")
 store.clear()
 docs = [
-    ("SCU2是一个基于CUF架构的智能Agent系统，支持三维度分离设计", "架构"),
+    ("SCU3是一个基于CUF架构的智能Agent系统，支持三维度分离设计", "架构"),
     ("向量数据库使用FAISS进行高效相似度检索，支持混合检索", "向量"),
     ("Qwen-7B是通义千问的7B参数本地大语言模型，支持中文对话", "模型"),
     ("BM25是一种基于词频的文本检索算法，常用于搜索引擎", "算法"),
@@ -104,9 +104,9 @@ print(f"  检索平均耗时: {search_time:.2f}ms")
 
 # 7. jieba分词验证
 print("\n[7] jieba中文分词")
-tokens = store._tokenize("SCU2是一个基于CUF架构的智能Agent系统")
+tokens = store._tokenize("SCU3是一个基于CUF架构的智能Agent系统")
 print(f"  分词结果: {tokens[:10]}...")
-assert "SCU2" in tokens or "scu2" in tokens or "架构" in tokens, "jieba分词异常"
+assert "SCU3" in tokens or "SCU3" in tokens or "架构" in tokens, "jieba分词异常"
 print("  jieba分词: OK")
 
 # 8. 持久化验证

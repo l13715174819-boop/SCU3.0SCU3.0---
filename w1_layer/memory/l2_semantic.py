@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional
 
 from w1_layer.memory.schemas import L2SemanticMemory
 
-logger = logging.getLogger("scu2.w1.memory.l2")
+logger = logging.getLogger("SCU3.w1.memory.l2")
 
 # 复用项目已有的向量库（FAISS+SBERT+BM25 三级降级 + 混合检索）
 try:
@@ -41,7 +41,7 @@ class L2SemanticStore:
     def __init__(self, data_dir: str = ""):
         self.data_dir = data_dir or os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-            "scu2_data", "memory"
+            "SCU3_data", "memory"
         )
         os.makedirs(self.data_dir, exist_ok=True)
 

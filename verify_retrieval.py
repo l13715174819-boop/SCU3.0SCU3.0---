@@ -3,7 +3,7 @@
 import urllib.request, urllib.parse, json
 
 API_BASE = "http://localhost:8000"
-HEADERS = {"X-API-Key": "scu2_dev_key_2026"}
+HEADERS = {"X-API-Key": "SCU3_dev_key_2026"}
 
 queries = [
     "v5.0性能对比",

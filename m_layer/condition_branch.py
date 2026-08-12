@@ -29,7 +29,7 @@ import logging
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.branch")
+logger = logging.getLogger("SCU3.m.branch")
 
 
 class ConditionBranch:

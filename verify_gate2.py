@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SCU2 阶段2门槛验证
+SCU3 阶段2门槛验证
 ===================
 验证三大指标：
   1. 功能对等率 ≥ 95%（13种工具 + RAG + LLM + SSE + 前端 + 反馈 + 白名单 + 审计）
@@ -29,7 +29,7 @@ def check(name, condition, detail="", critical=False):
 
 
 print("=" * 70)
-print("SCU2 阶段2门槛验证")
+print("SCU3 阶段2门槛验证")
 print("=" * 70)
 
 # ════════════════════════════════════════════════════════
@@ -59,7 +59,7 @@ try:
     check("RAG import_from_directory", hasattr(ks, 'import_from_directory'), "批量导入")
     check("RAG _recompute_all_tfidf", hasattr(ks, '_recompute_all_tfidf'), "TF-IDF重算(P0修复)")
     # 验证检索功能
-    results_search = ks.search("SCU2架构", top_k=3, threshold=0.05)
+    results_search = ks.search("SCU3架构", top_k=3, threshold=0.05)
     check("RAG检索返回结果", len(results_search) > 0, f"score={results_search[0]['score'] if results_search else 0}")
 except Exception as e:
     check("RAG知识库", False, str(e), critical=True)

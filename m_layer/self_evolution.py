@@ -29,10 +29,10 @@ import threading
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
 
-logger = logging.getLogger("scu2.m.evolution")
+logger = logging.getLogger("SCU3.m.evolution")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 EVOLUTION_STATE_PATH = os.path.join(DATA_DIR, "evolution_state.json")
 
 # 触发阈值

@@ -33,10 +33,10 @@ import importlib.util
 import threading
 from typing import Dict, Any, List, Optional, Callable, Tuple
 
-logger = logging.getLogger("scu2.m.market")
+logger = logging.getLogger("SCU3.m.market")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 MARKET_PATH = os.path.join(DATA_DIR, "plugin_marketplace.json")
 INSTALLED_PATH = os.path.join(DATA_DIR, "plugins_installed.json")
 
@@ -610,12 +610,10 @@ def _create_pdf_tool(module):
     """创建 PDF 读取工具"""
     def _tool_pdf_read(path: str, max_pages: int = 50) -> Dict:
         try:
-            from w1_layer.action import _safe_path
-            # 限制在 sandbox 目录
+            # 优先 sandbox 目录，其次允许绝对路径
             full_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                     "scu2_data", "sandbox", os.path.basename(path))
+                                     "SCU3_data", "sandbox", os.path.basename(path))
             if not os.path.exists(full_path):
-                # 允许绝对路径但限制范围
                 full_path = path
             reader = module.PdfReader(full_path)
             texts = []
@@ -673,7 +671,7 @@ def _create_qrcode_tool(module):
             if not output_path:
                 output_path = os.path.join(
                     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                    "scu2_data", "sandbox", f"qrcode_{int(time.time())}.png")
+                    "SCU3_data", "sandbox", f"qrcode_{int(time.time())}.png")
             img.save(output_path)
             return {"text": text, "saved_to": output_path, "success": True}
         except Exception as e:
@@ -706,12 +704,38 @@ def _create_image_tool(module):
 
 
 def _create_translator_tool(module):
-    """创建翻译工具"""
+    """创建翻译工具（优先 MyMemory 免费API，避免Google被墙）"""
+    # MyMemory 语言代码映射（不支持纯 'en'，需要 'english' 或 'en-GB'）
+    _MM_LANG_MAP = {
+        "en": "en-GB", "zh-CN": "zh-CN", "zh": "zh-CN",
+        "ja": "ja-JP", "ko": "ko-KR", "fr": "fr-FR",
+        "de": "de-DE", "es": "es-ES", "ru": "ru-RU",
+    }
+
     def _tool_translate(text: str, source: str = "auto", target: str = "en") -> Dict:
         try:
-            translator = module.GoogleTranslator(source=source, target=target)
-            result = translator.translate(text)
-            return {"text": text, "translated": result, "source": source, "target": target}
+            last_error = ""
+            # MyMemory 不支持 "auto"，需要明确语言
+            mm_source = _MM_LANG_MAP.get(source, "en-GB")
+            mm_target = _MM_LANG_MAP.get(target, "en-GB")
+
+            for translator_cls, kw in [
+                ("MyMemoryTranslator", {"source": mm_source, "target": mm_target}),
+                ("LibreTranslator", {"source": source, "target": target}),
+                ("GoogleTranslator", {"source": source, "target": target}),
+            ]:
+                try:
+                    cls = getattr(module, translator_cls, None)
+                    if cls is None:
+                        continue
+                    translator = cls(**kw)
+                    result = translator.translate(text)
+                    return {"text": text, "translated": result,
+                            "source": source, "target": target, "engine": translator_cls}
+                except Exception as e:
+                    last_error = f"{translator_cls}: {e}"
+                    continue
+            return {"text": text, "error": f"所有翻译引擎均失败: {last_error}"}
         except Exception as e:
             return {"text": text, "error": str(e)}
     return _tool_translate

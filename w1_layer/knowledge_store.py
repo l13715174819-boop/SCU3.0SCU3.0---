@@ -23,10 +23,10 @@ import threading
 from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime
 
-logger = logging.getLogger("scu2.w1.knowledge")
+logger = logging.getLogger("SCU3.w1.knowledge")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-KNOWLEDGE_DIR = os.path.join(BASE_DIR, "scu2_data", "knowledge")
+KNOWLEDGE_DIR = os.path.join(BASE_DIR, "SCU3_data", "knowledge")
 KNOWLEDGE_INDEX_PATH = os.path.join(KNOWLEDGE_DIR, "knowledge_index.json")
 
 
@@ -231,7 +231,7 @@ class KnowledgeStore:
         """
         # C3修复：路径白名单检查，限制在项目目录内
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        allowed_root = os.path.join(base_dir, "scu2_data")
+        allowed_root = os.path.join(base_dir, "SCU3_data")
         abs_path = os.path.abspath(dir_path)
         # M1修复：用 commonpath 防前缀碰撞
         try:

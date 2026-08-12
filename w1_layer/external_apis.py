@@ -33,12 +33,12 @@ import subprocess
 import urllib.parse as urlparse
 from typing import Dict, Any, Optional, List
 
-logger = logging.getLogger("scu2.external_api")
+logger = logging.getLogger("SCU3.external_api")
 
 # 统一User-Agent
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-# SCU2项目标识（GitHub API建议附带联系方式）
-GITHUB_UA = "SCU2-Agent/3.0 (+https://github.com/scu2)"
+# SCU3项目标识（GitHub API建议附带联系方式）
+GITHUB_UA = "SCU3-Agent/3.0 (+https://github.com/SCU3)"
 
 
 def _curl_json(url: str, headers: Optional[Dict] = None, timeout: int = 20) -> Optional[Any]:

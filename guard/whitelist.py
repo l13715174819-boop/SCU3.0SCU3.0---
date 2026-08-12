@@ -12,14 +12,14 @@ import threading
 from typing import Dict, Any, Tuple, List
 from datetime import datetime, timedelta
 
-logger = logging.getLogger("scu2.guard.whitelist")
+logger = logging.getLogger("SCU3.guard.whitelist")
 DEFAULT_TTL_HOURS = 24
 
 
 class WhitelistManager:
     """白名单管理器 — 审计后归档 + TTL + 哈希校验"""
 
-    def __init__(self, store_path: str = "scu2_data/whitelist.json"):
+    def __init__(self, store_path: str = "SCU3_data/whitelist.json"):
         self.store_path = store_path
         self._lock = threading.Lock()
         self._entries: Dict[str, Dict[str, Any]] = {}

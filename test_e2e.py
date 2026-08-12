@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""SCU2 端到端实测 — 3+3+3验证"""
+"""SCU3 端到端实测 — 3+3+3验证"""
 import json
 import urllib.request
 import urllib.parse
@@ -49,7 +49,7 @@ def stream(path, body):
 
 
 print("=" * 70)
-print("SCU2 端到端实测 · 3+3+3验证")
+print("SCU3 端到端实测 · 3+3+3验证")
 print("=" * 70)
 
 # ════════════════════════════════════════════════════════
@@ -88,14 +88,14 @@ print(f"    pattern: {r.get('pattern_key', '')} | 耗时: {r.get('elapsed_ms', '
 print("\n\n── 知识库类（3项）──")
 
 # 4. 添加知识
-r = post("/knowledge/add", {"content": "SCU2采用v3架构，三维度分离：数据流、权限层、守卫横切。D层只读，账本归W1，无死循环。", "source": "架构文档"})
+r = post("/knowledge/add", {"content": "SCU3采用v3架构，三维度分离：数据流、权限层、守卫横切。D层只读，账本归W1，无死循环。", "source": "架构文档"})
 print(f"\n[4] 添加知识文档")
 print(f"    success: {r.get('success', False)} | doc_id: {r.get('doc_id', '')}")
 
 # 5. 检索知识
-r = get("/knowledge/search?q=SCU2架构&top_k=3")
+r = get("/knowledge/search?q=SCU3架构&top_k=3")
 results = r.get("results", [])
-print(f"\n[5] 检索知识（关键词：SCU2架构）")
+print(f"\n[5] 检索知识（关键词：SCU3架构）")
 print(f"    结果数: {len(results)}")
 for i, doc in enumerate(results):
     print(f"    #{doc['id']} score={doc['score']} | {doc['content'][:50]}...")

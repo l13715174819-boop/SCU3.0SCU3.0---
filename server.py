@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SCU2 - 标准计算单元2 · 主入口
+SCU3 - 标准计算单元3 · 主入口
 ===============================
 基于 v3 架构：三维度分离
   数据流：感知(W2) → 记忆(W1) → 执行(W1) → 认知(M) → 元认知(M) → 输出
@@ -13,6 +13,7 @@ import uuid
 import logging
 import secrets
 import asyncio
+import urllib.parse
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
@@ -47,10 +48,10 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     datefmt="%H:%M:%S",
 )
-logger = logging.getLogger("scu2.main")
+logger = logging.getLogger("SCU3.main")
 
 # ─── 初始化组件 ────────────────────────────────
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 # W1 层运行时状态
@@ -91,17 +92,23 @@ code_modifier = init_code_modifier(
     require_human_approval=True,
 )
 
-app = FastAPI(title="标准计算单元2 SCU2", version="2.0.0")
+app = FastAPI(title="标准计算单元3 SCU3", version="3.0.0")
+
+# 挂载静态文件目录（exports/images 等生成的文件可通过 /exports/ 访问）
+from fastapi.staticfiles import StaticFiles
+_exports_dir = os.path.join(BASE_DIR, "exports")
+os.makedirs(_exports_dir, exist_ok=True)
+app.mount("/exports", StaticFiles(directory=_exports_dir), name="exports")
 
 
 # ─── C4修复：API Key 认证中间件 ────────────────────────────────
 # 安全策略：必须通过环境变量配置，未配置则使用开发模式默认Key并告警
-# 生产环境务必设置 SCU2_API_KEY 和 SCU2_ADMIN_API_KEY 环境变量
-API_KEY_ENV = "SCU2_API_KEY"
+# 生产环境务必设置 SCU3_API_KEY 和 SCU3_ADMIN_API_KEY 环境变量
+API_KEY_ENV = "SCU3_API_KEY"
 # 开发模式默认Key（仅当未配置环境变量时使用，启动时会输出显著告警）
-_DEV_DEFAULT_API_KEY = "scu2_dev_key_2026"
-ADMIN_API_KEY_ENV = "SCU2_ADMIN_API_KEY"
-_DEV_DEFAULT_ADMIN_KEY = "scu2_admin_key_2026"
+_DEV_DEFAULT_API_KEY = "SCU3_dev_key_2026"
+ADMIN_API_KEY_ENV = "SCU3_ADMIN_API_KEY"
+_DEV_DEFAULT_ADMIN_KEY = "SCU3_admin_key_2026"
 
 # 标记是否处于开发模式（使用默认Key）
 _USING_DEV_API_KEY = False
@@ -268,6 +275,47 @@ def process_request(prompt: str, user_id: str = "default_user") -> Dict[str, Any
 
     # ① W2 感知层
     ctx = perception.process(prompt, {"user_id": user_id})
+
+    # 图片生成意图：直接调用图片生成工具，跳过LLM流程
+    if ctx.get("intent") == "image_generation":
+        try:
+            import urllib.request as _urq
+            import hashlib as _hl
+            os.makedirs(os.path.join(BASE_DIR, "exports", "images"), exist_ok=True)
+            img_prompt = prompt
+            # 移除命令式前缀（"生成图片："、"画一张"等），提取实际描述
+            import re as _re_img
+            img_prompt = _re_img.sub(r'^(?:生成|创建|制作|画)\s*(?:一张|一幅|一个|张|幅|个)?\s*(?:图片|图|画|图像)?\s*[：:of]?\s*', '', prompt, count=1, flags=_re_img.I)
+            if not img_prompt.strip():
+                img_prompt = prompt  # 回退到原始输入
+
+            encoded = urllib.parse.quote(img_prompt, safe="")
+            seed = int(time.time()) % 1000000
+            img_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1280&height=720&nologo=true&seed={seed}"
+            logger.info(f"图片生成（对话内调用）: prompt={img_prompt[:50]}...")
+
+            req_obj = _urq.Request(img_url, headers={"User-Agent": "SCU3/3.0"})
+            with _urq.urlopen(req_obj, timeout=60) as resp:
+                img_data = resp.read()
+
+            name_hash = _hl.md5(f"{img_prompt}{seed}".encode()).hexdigest()[:8]
+            fname = f"gen_{name_hash}.png"
+            fpath = os.path.join(BASE_DIR, "exports", "images", fname)
+            with open(fpath, "wb") as f:
+                f.write(img_data)
+
+            img_path_url = f"/exports/images/{fname}"
+            ctx["response"] = f"[IMAGE]{img_path_url}[/IMAGE]\n已根据您的描述生成图片：{img_prompt}\n图片已保存到 exports/images/{fname}"
+            ctx["cognition_ok"] = True
+            ctx["llm_mode"] = "image_generation"
+            ctx["image_generated"] = {"path": img_path_url, "prompt": img_prompt, "bytes": len(img_data)}
+            logger.info(f"图片生成成功: {fname}, {len(img_data)} bytes")
+
+            merged = metacog.merge(ctx, cuf_traces, op_id)
+            return _build_response(merged, op_id, start)
+        except Exception as e:
+            logger.error(f"图片生成失败，降级到LLM对话: {e}", exc_info=True)
+            ctx["intent"] = "conversation"  # 降级到普通对话
 
     # ② 守卫①：W2→W1 跨层审计
     op1 = Operation(
@@ -518,7 +566,7 @@ async def health():
     return JSONResponse({
         "status": "ok",
         "arch": "v3",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "balance": round(ledger.balance(), 4),
     })
 
@@ -526,7 +574,7 @@ async def health():
 @app.get("/status")
 async def status(api_key: str = Depends(verify_admin_key)):
     return JSONResponse({
-        "arch": "v3", "version": "2.0.0",
+        "arch": "v3", "version": "3.0.0",
         "balance": round(ledger.balance(), 4),
         "stats": ledger.stats(),
         "whitelist_count": len(whitelist.list_all()),
@@ -582,7 +630,7 @@ async def cognition_yin_yang_status():
 async def local_backends_status():
     """本地模型后端状态（LM Studio / ComfyUI）
 
-    SCU2 默认使用自有 local_model（Qwen2.5-7B/VL），未集成 LM Studio/ComfyUI。
+    SCU3 默认使用自有 local_model（Qwen2.5-7B/VL），未集成 LM Studio/ComfyUI。
     返回 enabled=false 让前端显示"未启用"。
     """
     return JSONResponse({
@@ -741,15 +789,15 @@ async def list_models():
 async def list_units():
     """列出可用 SCU 单元（供前端对话面板下拉框使用，无认证）
 
-    SCU2 为单实例部署，返回默认单元。
+    SCU3 为单实例部署，返回默认单元。
     """
     return JSONResponse({
         "success": True,
         "data": {
             "units": [
                 {
-                    "uid": "scu2-default",
-                    "system_prompt_style": "SCU2 标准单元",
+                    "uid": "SCU3-default",
+                    "system_prompt_style": "SCU3 标准单元",
                 },
             ],
         },
@@ -3318,7 +3366,7 @@ async def self_check_full(api_key: str = Depends(verify_admin_key)):
     return JSONResponse({"success": True, "data": {
         "status": "ok",
         "arch": "v3",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "balance": round(ledger.balance(), 4),
         "stats": ledger.stats(),
         "whitelist_count": len(whitelist.list_all()),
@@ -3377,6 +3425,73 @@ async def code_proposals(api_key: str = Depends(verify_admin_key)):
         return JSONResponse({"success": True, "data": {"proposals": []}})
 
 
+# ─── 图片生成（Pollinations 免配置） ────────────────────────────────
+_SIZE_MAP = {
+    "landscape_16_9": (1280, 720),
+    "landscape_4_3": (1152, 864),
+    "square_hd": (1024, 1024),
+    "square": (1024, 1024),
+    "portrait_4_3": (864, 1152),
+    "portrait_16_9": (720, 1280),
+}
+
+
+@app.post("/image/generate")
+async def image_generate(req: dict, api_key: str = Depends(verify_api_key)):
+    """图片生成端点（默认使用 Pollinations 免配置在线服务）"""
+    import urllib.request
+    import hashlib
+
+    prompt = (req.get("prompt") or "").strip()
+    if not prompt:
+        return JSONResponse({"success": False, "error": "提示词不能为空"})
+
+    size_key = req.get("size", "landscape_16_9")
+    width, height = _SIZE_MAP.get(size_key, (1280, 720))
+    backend = req.get("backend", "pollinations")
+    save_dir = req.get("save_dir", "exports/images")
+
+    # 确保 exports/images 目录存在
+    save_path = os.path.join(BASE_DIR, save_dir.replace("/", os.sep))
+    os.makedirs(save_path, exist_ok=True)
+
+    start_time = time.time()
+    try:
+        if backend == "pollinations":
+            # Pollinations: GET https://image.pollinations.ai/prompt/{prompt}?width=&height=&nologo=true
+            encoded = urllib.parse.quote(prompt, safe="")
+            seed = int(time.time()) % 1000000
+            url = f"https://image.pollinations.ai/prompt/{encoded}?width={width}&height={height}&nologo=true&seed={seed}"
+            logger.info(f"图片生成请求: Pollinations, prompt={prompt[:50]}...")
+
+            req_obj = urllib.request.Request(url, headers={"User-Agent": "SCU3/3.0"})
+            with urllib.request.urlopen(req_obj, timeout=60) as resp:
+                img_data = resp.read()
+
+            # 生成文件名
+            name_hash = hashlib.md5(f"{prompt}{seed}".encode()).hexdigest()[:8]
+            fname = f"gen_{name_hash}.png"
+            fpath = os.path.join(save_path, fname)
+            with open(fpath, "wb") as f:
+                f.write(img_data)
+
+            gen_seconds = time.time() - start_time
+            logger.info(f"图片生成成功: {fname}, {len(img_data)} bytes, {gen_seconds:.1f}s")
+            return JSONResponse({"success": True, "data": {
+                "image_path": f"{save_dir}/{fname}",
+                "file_bytes": len(img_data),
+                "gen_seconds": gen_seconds,
+                "device": "pollinations",
+                "backend": backend,
+                "prompt": prompt,
+            }})
+        else:
+            return JSONResponse({"success": False, "error": f"后端 {backend} 暂未实现，请使用 pollinations"})
+    except Exception as e:
+        logger.error(f"图片生成失败: {e}", exc_info=True)
+        return JSONResponse({"success": False, "error": f"图片生成失败: {e}"})
+
+
 # ─── 图片后端列表（桩） ────────────────────────────────
 @app.get("/image/backends")
 async def image_backends():
@@ -3409,7 +3524,7 @@ async def chat_image(req: dict, api_key: str = Depends(verify_api_key)):
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("🚀 标准计算单元2 SCU2 启动 (v3 架构 + Agent能力)")
+    logger.info("🚀 标准计算单元3 SCU3 启动 (v3 架构 + Agent能力)")
 
     # 安全告警：使用默认Key时显著提示
     _get_configured_api_key()  # 触发标记
@@ -3419,8 +3534,8 @@ if __name__ == "__main__":
             "\n" + "=" * 70 + "\n"
             "⚠️  安全告警：正在使用开发模式默认 API Key/Admin Key\n"
             "    生产环境务必配置环境变量：\n"
-            "      set SCU2_API_KEY=<your_strong_key>\n"
-            "      set SCU2_ADMIN_API_KEY=<your_strong_admin_key>\n"
+            "      set SCU3_API_KEY=<your_strong_key>\n"
+            "      set SCU3_ADMIN_API_KEY=<your_strong_admin_key>\n"
             "    默认Key已公开在源码中，不安全！\n"
             + "=" * 70
         )
@@ -3428,8 +3543,8 @@ if __name__ == "__main__":
         print(warn_msg)
 
     # C4修复：默认监听127.0.0.1（生产环境用反向代理）
-    host = os.getenv("SCU2_HOST", "127.0.0.1")
-    port = int(os.getenv("SCU2_PORT", "8300"))
+    host = os.getenv("SCU3_HOST", "127.0.0.1")
+    port = int(os.getenv("SCU3_PORT", "8300"))
     if host in ("0.0.0.0", "::"):
         logger.warning(f"⚠️ 服务监听 {host}，将暴露至所有网卡！仅开发测试用。")
     uvicorn.run(app, host=host, port=port, log_level="info")

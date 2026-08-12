@@ -102,7 +102,7 @@
   .status-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px var(--success-soft);animation:pulse 2.4s infinite}
   .status-dot.offline{background:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
   /* CUF 内核指示器（顶栏常驻） */
-  .cuf-indicator{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:11.5px;font-weight:550;color:var(--primary-hover);background:var(--primary-soft);padding:5px 12px;border-radius:20px;border:1px solid rgba(99,102,241,.18);cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);letter-spacing:-.005em;user-select:none}
+  .cuf-indicator{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:550;color:var(--primary-hover);background:var(--primary-soft);padding:5px 12px;border-radius:20px;border:1px solid rgba(99,102,241,.18);cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);letter-spacing:-.005em;user-select:none}
   .cuf-indicator:hover{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.3);transform:translateY(-.5px);box-shadow:0 2px 8px -2px var(--primary-glow)}
   .cuf-indicator svg{width:13px;height:13px;color:var(--primary);flex-shrink:0}
   .cuf-indicator.off{color:var(--text-light);background:var(--bg-soft);border-color:var(--border)}
@@ -121,7 +121,7 @@
   .pair-indicator .pair-dot.fail{background:var(--danger);box-shadow:0 0 0 2px rgba(244,63,94,.15)}
   .pair-indicator .pair-dot.pending{background:var(--warning);box-shadow:0 0 0 2px rgba(245,158,11,.15)}
   /* 本地后端指示器（LM Studio + ComfyUI） */
-  .local-indicator{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:550;color:var(--success);background:rgba(16,185,129,.08);padding:5px 12px;border-radius:20px;border:1px solid rgba(16,185,129,.18);cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);letter-spacing:-.005em;user-select:none}
+  .local-indicator{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:11.5px;font-weight:550;color:var(--success);background:rgba(16,185,129,.08);padding:5px 12px;border-radius:20px;border:1px solid rgba(16,185,129,.18);cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);letter-spacing:-.005em;user-select:none}
   .local-indicator:hover{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.32);transform:translateY(-.5px);box-shadow:0 2px 8px -2px rgba(16,185,129,.2)}
   .local-indicator svg{width:13px;height:13px;color:var(--success);flex-shrink:0}
   .local-indicator.off{color:var(--text-light);background:var(--bg-soft);border-color:var(--border)}
@@ -325,6 +325,7 @@
   /* 推理中太极旋转 */
   .react-panel-head .taiji{animation:taiji-spin 1.4s linear infinite}
   .react-panel-head .taiji.still{animation:none}
+  .msg-loading .taiji.spinning{animation:taiji-spin 1.4s linear infinite !important;transform-origin:center !important;display:inline-block !important;flex-shrink:0}
   @keyframes taiji-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
   /* transform-origin 设为元素中心 */
   .react-panel-head svg{transform-origin:center}
@@ -442,7 +443,28 @@
   @media (max-width:760px){
     .grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
     .sidebar{display:none}
+    .orch-mode-group{grid-template-columns:1fr 1fr}
   }
+
+  /* 任务编排模式选择器（TRAE风格：透明背景+左侧2px细线+黑白主色） */
+  .orch-mode-group{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+  .orch-mode{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;background:transparent;border:1px solid var(--border-soft);border-left:2px solid transparent;border-radius:6px;cursor:pointer;transition:all .15s;text-align:left;font-family:inherit}
+  .orch-mode:hover{background:var(--bg-soft);border-color:var(--border)}
+  .orch-mode.active{border-left:2px solid var(--text);background:var(--bg-soft)}
+  .orch-mode-title{font-size:12.5px;font-weight:600;color:var(--text)}
+  .orch-mode-desc{font-size:10.5px;color:var(--text-light);line-height:1.3}
+  .orch-result-step{padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:12px}
+  .orch-result-step:last-child{border-bottom:none}
+  .orch-step-id{display:inline-block;width:22px;height:22px;border-radius:4px;background:var(--text);color:var(--bg);font-size:11px;font-weight:600;text-align:center;line-height:22px;margin-right:8px;vertical-align:middle}
+  .orch-step-status{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;margin-left:6px;vertical-align:middle}
+  .orch-step-status.done{background:rgba(34,197,94,.12);color:#16a34a}
+  .orch-step-status.running{background:rgba(59,130,246,.12);color:#2563eb}
+  .orch-step-status.failed{background:rgba(239,68,68,.12);color:#dc2626}
+  .orch-step-status.pending{background:var(--bg-muted);color:var(--text-light)}
+  .orch-template-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+  .orch-template-item:hover{background:var(--bg-soft);border-color:var(--border)}
+  .orch-template-name{font-size:12.5px;font-weight:500;color:var(--text)}
+  .orch-template-desc{font-size:10.5px;color:var(--text-light);margin-top:2px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
@@ -484,16 +506,19 @@
   <main class="main">
     <header class="topbar">
       <div class="topbar-title" id="topbarTitle">智能对话</div>
-      <div class="cuf-indicator" id="cufIndicator" onclick="document.querySelector('[data-panel=monitor]').click()" title="CUF 安全内核 — 点击查看详情">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>CUF</span>
-        <span class="cuf-bal" id="cufTopBalance">加载中</span>
-      </div>
       <div class="pair-indicator" id="pairIndicator" onclick="document.querySelector('[data-panel=monitor]').click()" title="对子（Yin-Yang）双审批状态 — 点击查看详情">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20c-2.5 0-4.5-3.1-4.5-7S9.5 2 12 2z" fill="currentColor" opacity="0.6"/></svg>
         <span>对子</span>
         <span class="pair-dot" id="pairDot"></span>
         <span class="pair-count" id="pairCount">加载中</span>
+      </div>
+      <div id="chatPairApiWrap" style="display:none">
+        <span id="chatPairApiTag" style="display:inline-block;font-size:10.5px;padding:3px 9px;border-radius:12px;background:var(--accent-soft);border:1px solid rgba(167,139,250,.2);color:var(--accent);font-weight:500;letter-spacing:-.005em;"></span>
+      </div>
+      <div class="cuf-indicator" id="cufIndicator" onclick="document.querySelector('[data-panel=monitor]').click()" title="CUF 安全内核 — 点击查看详情">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>CUF</span>
+        <span class="cuf-bal" id="cufTopBalance">加载中</span>
       </div>
       <div class="local-indicator" id="localIndicator" onclick="document.querySelector('[data-panel=monitor]').click()" title="本地推理后端 — 点击查看详情">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
@@ -521,15 +546,12 @@
           <div class="chat-toolbar">
             <div class="form-group" id="chatModelGroup" style="position:relative">
               <select id="chatModel" class="form-select" title="选择模型"></select>
-              <div id="chatPairApiWrap" style="display:none;text-align:center;margin-top:5px;">
-                <span id="chatPairApiTag" style="display:inline-block;font-size:10.5px;padding:3px 9px;border-radius:12px;background:#fff;border:1px solid var(--border);color:var(--text);font-weight:500;letter-spacing:-.005em;"></span>
-              </div>
             </div>
             <div class="form-group">
               <select id="chatUnit" class="form-select" title="选择单元"></select>
             </div>
             <div class="form-group">
-              <input id="chatApiKey" class="form-input" type="password" placeholder="API Key" title="SCU2 API Key（与监控面板同步）" oninput="localStorage.setItem('scu2_api_key', this.value.trim()); const k=document.getElementById('apiKeyInput'); if(k) k.value=this.value;" style="width:120px;font-size:12px">
+              <input id="chatApiKey" class="form-input" type="password" placeholder="API Key" title="SCU3 API Key（与监控面板同步）" oninput="localStorage.setItem('SCU3_api_key', this.value.trim()); const k=document.getElementById('apiKeyInput'); if(k) k.value=this.value;" style="width:120px;font-size:12px">
             </div>
             <div class="form-group">
               <select id="chatMode" class="form-select" title="对话模式">
@@ -791,7 +813,7 @@
         <div class="card" style="margin-top:16px">
           <div class="card-title">六维度自指检查（需 API Key）</div>
           <div class="form-row" style="margin-bottom:12px">
-            <div class="form-group"><input class="form-input" id="apiKeyInput" type="password" placeholder="输入 SCU_API_KEY..." oninput="localStorage.setItem('scu2_api_key', this.value.trim()); const k2=document.getElementById('chatApiKey'); if(k2) k2.value=this.value;"></div>
+            <div class="form-group"><input class="form-input" id="apiKeyInput" type="password" placeholder="输入 SCU_API_KEY..." oninput="localStorage.setItem('SCU3_api_key', this.value.trim()); const k2=document.getElementById('chatApiKey'); if(k2) k2.value=this.value;"></div>
             <button class="btn btn-primary" onclick="runSelfCheck(false)">快速自检</button>
             <button class="btn btn-ghost" onclick="runSelfCheck(true)">完整自检</button>
           </div>
@@ -1181,8 +1203,100 @@
       <section class="panel" id="panel-agent">
         <div class="panel-header">
           <div class="panel-title">Agent</div>
-          <div class="panel-desc">多 Agent 协作 · 并行执行 · 条件分支 · 检查点</div>
+          <div class="panel-desc">任务编排 · 多Agent协作 · 并行执行 · 条件分支 · 检查点</div>
         </div>
+
+        <!-- 任务编排入口 -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">任务编排</div>
+          <div class="form-label" style="margin-top:8px">目标描述</div>
+          <textarea class="config-editor" id="agentGoalInput" style="min-height:80px;font-size:13.5px" placeholder='输入任务目标，例如：&#10;• 搜索GPT最新动态并生成摘要&#10;• 读取文件并统计字数&#10;• 分析人工智能发展趋势'></textarea>
+          
+          <div class="form-label" style="margin-top:12px">执行模式</div>
+          <div class="orch-mode-group" id="orchModeGroup">
+            <button class="orch-mode active" data-mode="single" onclick="selectOrchMode('single')">
+              <span class="orch-mode-title">单Agent</span>
+              <span class="orch-mode-desc">规划→执行→反思</span>
+            </button>
+            <button class="orch-mode" data-mode="multi" onclick="selectOrchMode('multi')">
+              <span class="orch-mode-title">多Agent</span>
+              <span class="orch-mode-desc">多智能体协作</span>
+            </button>
+            <button class="orch-mode" data-mode="parallel" onclick="selectOrchMode('parallel')">
+              <span class="orch-mode-title">并行执行</span>
+              <span class="orch-mode-desc">DAG依赖并行</span>
+            </button>
+            <button class="orch-mode" data-mode="distributed" onclick="selectOrchMode('distributed')">
+              <span class="orch-mode-title">分布式</span>
+              <span class="orch-mode-desc">任务分片合并</span>
+            </button>
+          </div>
+
+          <!-- 多Agent子任务配置（仅multi模式显示） -->
+          <div id="multiAgentConfig" style="display:none;margin-top:12px">
+            <div class="form-label">子任务列表（每行一个，格式：任务描述 / 专长[search|analysis|writing|coding|general]）</div>
+            <textarea class="config-editor" id="multiAgentSubtasks" style="min-height:100px;font-size:12.5px" placeholder='搜索GPT最新动态 / search&#10;分析搜索结果 / analysis&#10;生成摘要报告 / writing'></textarea>
+            <div class="form-row" style="margin-top:8px">
+              <div class="form-group">
+                <label class="form-label" style="font-size:11px">隔离模式</label>
+                <select class="form-input" id="multiAgentIsolation" style="font-size:12px;padding:6px 10px">
+                  <option value="thread">线程（共享上下文）</option>
+                  <option value="process">进程（独立隔离）</option>
+                  <option value="mixed">混合（任务级覆盖）</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 分布式配置（仅distributed模式显示） -->
+          <div id="distConfig" style="display:none;margin-top:12px">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" style="font-size:11px">Worker数量</label>
+                <input class="form-input" id="distWorkers" type="number" value="2" min="1" max="8" style="font-size:12px;padding:6px 10px">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:11px">合并策略</label>
+                <select class="form-input" id="distMerge" style="font-size:12px;padding:6px 10px">
+                  <option value="concat">concat（拼接）</option>
+                  <option value="sum">sum（求和）</option>
+                  <option value="avg">avg（平均）</option>
+                  <option value="max">max（最大）</option>
+                  <option value="dict_merge">dict_merge（字典合并）</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="agentPlanOnly()">仅规划</button>
+            <button class="btn btn-primary btn-sm" onclick="agentRunTask()">规划并执行</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearOrchResult()">清空结果</button>
+          </div>
+
+          <!-- 规划/执行结果 -->
+          <div id="orchResultWrap" style="margin-top:14px;display:none">
+            <div class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+              <span>执行结果</span>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="sendPlanToVisualize()">送可视化</button>
+                <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="copyOrchResult()">复制JSON</button>
+              </div>
+            </div>
+            <div id="orchResult" style="max-height:400px;overflow-y:auto;background:var(--bg-soft);border-radius:8px;padding:12px;font-size:12.5px;font-family:'SF Mono',Consolas,monospace;border-left:2px solid var(--primary);white-space:pre-wrap;word-break:break-all"></div>
+          </div>
+        </div>
+
+        <!-- 模板快捷区 -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>任务模板</span>
+            <button class="btn btn-ghost btn-sm" onclick="loadTemplates()">刷新</button>
+          </div>
+          <div id="templateList" style="max-height:120px;overflow-y:auto"><div class="empty">点击刷新加载已沉淀的模板</div></div>
+        </div>
+
+        <!-- 原有：协作可视化 -->
         <div class="grid grid-2">
           <div class="card">
             <div class="card-title">多 Agent 协作可视化</div>
@@ -1305,8 +1419,8 @@ async function api(path, opts={}){
   const key = opts.apiKey
     || (document.getElementById('apiKeyInput')?.value?.trim())
     || (document.getElementById('chatApiKey')?.value?.trim())
-    || (localStorage.getItem('scu2_api_key') || '')
-    || 'scu2_dev_key_2026';
+    || (localStorage.getItem('SCU3_api_key') || '')
+    || 'SCU3_dev_key_2026';
   if(key) headers['X-API-Key'] = key;
   try{
     const r = await fetch(API+path, {...opts, headers});
@@ -1321,8 +1435,8 @@ async function api(path, opts={}){
 async function streamFetch(path, body){
   const key = (document.getElementById('apiKeyInput')?.value?.trim())
     || (document.getElementById('chatApiKey')?.value?.trim())
-    || (localStorage.getItem('scu2_api_key') || '')
-    || 'scu2_dev_key_2026';
+    || (localStorage.getItem('SCU3_api_key') || '')
+    || 'SCU3_dev_key_2026';
   const headers = {'Content-Type': 'application/json'};
   if(key) headers['X-API-Key'] = key;
   return fetch(API+path, {method:'POST', headers, body:JSON.stringify(body)});
@@ -1330,6 +1444,28 @@ async function streamFetch(path, body){
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 // 轻量Markdown渲染（安全转义 + 基本格式）
 function renderAI(s){
+  // 如果文本已经包含 HTML 标签（如太极图标 SVG），则直接返回不转义
+  if(typeof s === "string" && (s.includes("<span") || s.includes("<svg") || s.includes("<div"))){
+    return s;
+  }
+  // 图片标记渲染：[IMAGE]/exports/images/xxx.png[/IMAGE]
+  if(typeof s === "string" && s.includes("[IMAGE]")){
+    // 提取图片标记，替换为占位符，走正常渲染后再还原
+    const placeholders = [];
+    let text = s.replace(/\[IMAGE\]([^\[]+)\[\/IMAGE\]/g, (m, path) => {
+      const idx = placeholders.length;
+      placeholders.push(`<div style="margin:8px 0"><img src="${path}?t=${Date.now()}" alt="AI生成图片" style="max-width:100%;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1)"><div style="margin-top:6px;font-size:12px;color:var(--text-muted)"><a href="${path}" download style="color:var(--primary)">下载图片</a></div></div>`);
+      return `\x00IMG${idx}\x00`;
+    });
+    // 对剩余文本走正常转义+渲染
+    let t = esc(text);
+    t = t.replace(/\n/g, '<br>');
+    // 还原图片占位符
+    placeholders.forEach((html, i) => {
+      t = t.replace(`\x00IMG${i}\x00`, html);
+    });
+    return t;
+  }
   let t = esc(s);
   // 代码块
   t = t.replace(/```[\s\S]*?```/g, m => '<pre style="background:var(--surface-muted);padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;">'+m.replace(/```/g,'')+'</pre>');
@@ -1419,7 +1555,7 @@ async function checkHealth(){
   }else{
     dot.classList.add('offline');
     txt.textContent = '离线';
-    footer.innerHTML = `<span class="ver">SCU2</span><span style="color:var(--danger)">服务未连接</span>`;
+    footer.innerHTML = `<span class="ver">SCU3</span><span style="color:var(--danger)">服务未连接</span>`;
   }
 }
 
@@ -1665,7 +1801,7 @@ async function reactSend(body, sendBtn, ICON){
 
   function updateAnswer(){
     if(full){
-      answerEl.innerHTML = full.replace(/\n/g,'<br>') + (done ? '' : '<span class="typing-cursor"></span>');
+      answerEl.innerHTML = renderAI(full) + (done ? '' : '<span class="typing-cursor"></span>');
     }else if(done){
       answerEl.innerHTML = '';
     }else{
@@ -1756,7 +1892,7 @@ async function sendChat(){
 
   // 🤖 智能助手模式：走 /chat/stream，流式打字机
   if(smart){
-    const msgDiv = appendMsg('ai', '<span class="msg-loading"><span class="typing-cursor"></span>正在思考...</span>');
+    const msgDiv = appendMsg('ai', '<span class="msg-loading"><svg class="taiji spinning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:14px;height:14px;vertical-align:-2px;animation:taiji-spin 1.4s linear infinite;transform-origin:center;display:inline-block;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 3a4.5 4.5 0 0 1 0 9 4.5 4.5 0 0 0 0 9" fill="currentColor" stroke="none"/></svg>正在思考...</span>');
     const bubble = msgDiv.querySelector('.msg-bubble');
     let full = '';
     setOpsActive(true);
@@ -2183,7 +2319,7 @@ async function fetchHot(){
 // ─── 系统监控 ─────────────────────────
 async function loadMonitor(){
   const st = await api('/health');
-  // SCU2 /health 返回 {status, arch, version, balance}；完整 stats/whitelist_count/last_audit 需认证 /status
+  // SCU3 /health 返回 {status, arch, version, balance}；完整 stats/whitelist_count/last_audit 需认证 /status
   const d = (st && st.status === 'ok') ? st : {};
   const stats = d.stats || {};
   // 统计卡片
@@ -2205,12 +2341,12 @@ async function loadMonitor(){
     ['最后审计', d.last_audit?d.last_audit.slice(0,19).replace('T',' '):'未审计'],
   ];
   document.getElementById('monHealth').innerHTML = healthItems.map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-soft)"><span style="color:var(--text-muted)">${esc(k)}</span><span style="font-weight:600">${esc(v)}</span></div>`).join('');
-  // 多模态（SCU2无此功能，显示架构信息）
+  // 多模态（SCU3无此功能，显示架构信息）
   document.getElementById('monMultimodal').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-soft)"><span style="color:var(--text-muted)">CUF守卫</span><span class="tag tag-success">已启用</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-soft)"><span style="color:var(--text-muted)">内容过滤</span><span class="tag tag-success">已启用</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-soft)"><span style="color:var(--text-muted)">工具守卫</span><span class="tag tag-success">13种工具</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0"><span style="color:var(--text-muted)">RAG知识库</span><span class="tag tag-success">已启用</span></div>`;
   // JSON 视图
   renderJSON('monMeta', d);
   renderJSON('monLearn', stats);
-  // 元认知简洁可视化（SCU2用审计状态代替）
+  // 元认知简洁可视化（SCU3用审计状态代替）
   const auditTime = d.last_audit ? d.last_audit.slice(0,19).replace('T',' ') : '未执行';
   document.getElementById('monMetaSimple').innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -2645,7 +2781,7 @@ loadPairStatus();
 loadYinYangStatus();
 loadLocalBackends();
 // 从 localStorage 恢复 API Key 到输入框（对话面板 + 监控面板同步）
-const _savedKey = localStorage.getItem('scu2_api_key') || '';
+const _savedKey = localStorage.getItem('SCU3_api_key') || '';
 if(_savedKey){
   const _ki1 = document.getElementById('apiKeyInput'); if(_ki1) _ki1.value = _savedKey;
   const _ki2 = document.getElementById('chatApiKey'); if(_ki2) _ki2.value = _savedKey;
@@ -2810,7 +2946,7 @@ function exportMermaid(fmt){
   if(fmt==='svg'){
     const blob = new Blob([new XMLSerializer().serializeToString(svg)], {type:'image/svg+xml'});
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'scu2-visualize.svg'; a.click();
+    a.href = URL.createObjectURL(blob); a.download = 'SCU3-visualize.svg'; a.click();
     URL.revokeObjectURL(a.href);
   }else{
     const xml = new XMLSerializer().serializeToString(svg);
@@ -2820,7 +2956,7 @@ function exportMermaid(fmt){
       c.width = svg.viewBox.baseVal.width || 800; c.height = svg.viewBox.baseVal.height || 600;
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
       const a = document.createElement('a');
-      a.href = c.toDataURL('image/png'); a.download = 'scu2-visualize.png'; a.click();
+      a.href = c.toDataURL('image/png'); a.download = 'SCU3-visualize.png'; a.click();
     };
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(xml)));
   }
@@ -3317,6 +3453,208 @@ async function previewConvInject(){
 }
 
 // ─── 🤖 Agent ─────────────────────────
+// 任务编排状态
+let _orchCurrentMode = 'single';
+let _orchCurrentResult = null;
+
+function selectOrchMode(mode){
+  _orchCurrentMode = mode;
+  document.querySelectorAll('#orchModeGroup .orch-mode').forEach(b=>{
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  document.getElementById('multiAgentConfig').style.display = (mode === 'multi') ? 'block' : 'none';
+  document.getElementById('distConfig').style.display = (mode === 'distributed') ? 'block' : 'none';
+}
+
+async function agentPlanOnly(){
+  const goal = document.getElementById('agentGoalInput').value.trim();
+  if(!goal){ toast('请输入任务目标', 'warn'); return; }
+  const btn = event?.target;
+  if(btn){ btn.disabled = true; btn.textContent = '规划中...'; }
+  document.getElementById('orchResultWrap').style.display = 'block';
+  document.getElementById('orchResult').innerHTML = '<span style="color:var(--text-light)">规划中...</span>';
+  try{
+    const r = await api('/agent/plan', {method:'POST', body:{goal}});
+    _orchCurrentResult = r;
+    renderOrchResult(r, 'plan');
+  }catch(e){
+    document.getElementById('orchResult').innerHTML = `<span style="color:var(--danger)">规划失败: ${esc(e.message)}</span>`;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '仅规划'; }
+  }
+}
+
+async function agentRunTask(){
+  const goal = document.getElementById('agentGoalInput').value.trim();
+  if(!goal){ toast('请输入任务目标', 'warn'); return; }
+  const btn = event?.target;
+  if(btn){ btn.disabled = true; btn.textContent = '执行中...'; }
+  document.getElementById('orchResultWrap').style.display = 'block';
+  document.getElementById('orchResult').innerHTML = '<span style="color:var(--text-light)">执行中（可能需要数十秒）...</span>';
+
+  try{
+    let r;
+    if(_orchCurrentMode === 'single'){
+      r = await api('/agent/run', {method:'POST', body:{goal}});
+    } else if(_orchCurrentMode === 'multi'){
+      const subtasks = parseMultiSubtasks(document.getElementById('multiAgentSubtasks').value);
+      const isolation = document.getElementById('multiAgentIsolation').value;
+      r = await api('/multiagent/execute', {method:'POST', body:{goal, subtasks, isolation}});
+    } else if(_orchCurrentMode === 'parallel'){
+      r = await api('/parallel/execute', {method:'POST', body:{goal}});
+    } else if(_orchCurrentMode === 'distributed'){
+      const workers = parseInt(document.getElementById('distWorkers').value) || 2;
+      const merge_strategy = document.getElementById('distMerge').value;
+      r = await api('/distributed/execute', {method:'POST', body:{goal, workers, merge_strategy}});
+    }
+    _orchCurrentResult = r;
+    renderOrchResult(r, _orchCurrentMode);
+  }catch(e){
+    document.getElementById('orchResult').innerHTML = `<span style="color:var(--danger)">执行失败: ${esc(e.message)}</span>`;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '规划并执行'; }
+  }
+}
+
+function parseMultiSubtasks(text){
+  if(!text || !text.trim()) return [];
+  return text.trim().split('\n').map(line => {
+    const parts = line.split('/').map(s => s.trim());
+    return {task: parts[0], specialty: parts[1] || 'general'};
+  }).filter(t => t.task);
+}
+
+function renderOrchResult(r, mode){
+  const el = document.getElementById('orchResult');
+  if(!r || (!r.success && !r.plan && !r.result)){
+    el.innerHTML = `<span style="color:var(--danger)">失败: ${esc(r?.error || '未知错误')}</span>`;
+    return;
+  }
+
+  const plan = r.plan || r.data?.plan;
+  const result = r.result || r.data?.result || r.data;
+  const steps = plan?.steps || result?.steps || [];
+  const finalOutput = result?.final_output || result?.output || r.response || '';
+
+  let html = '';
+
+  // 模式标签
+  const modeLabels = {plan:'规划', single:'单Agent', multi:'多Agent', parallel:'并行', distributed:'分布式'};
+  html += `<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-soft)">
+    <span style="font-size:11px;color:var(--text-light)">模式</span>
+    <span style="font-size:12px;font-weight:600;margin-left:6px">${modeLabels[mode]||mode}</span>
+    ${r.execution_time ? `<span style="font-size:11px;color:var(--text-light);margin-left:12px">耗时 ${r.execution_time.toFixed(1)}s</span>` : ''}
+    ${r.worker_count ? `<span style="font-size:11px;color:var(--text-light);margin-left:12px">Workers ${r.worker_count}</span>` : ''}
+  </div>`;
+
+  // 步骤列表
+  if(steps && steps.length > 0){
+    html += '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--text-light);margin-bottom:6px">执行步骤</div>';
+    steps.forEach((s, i) => {
+      const status = s.status || (s.result ? 'done' : 'pending');
+      const statusText = {done:'完成', running:'执行中', failed:'失败', pending:'待执行'}[status] || status;
+      html += `<div class="orch-result-step">
+        <span class="orch-step-id">${i+1}</span>
+        <span style="font-weight:500">${esc(s.name || s.task || s.id || '')}</span>
+        <span class="orch-step-status ${status}">${statusText}</span>
+      </div>`;
+      if(s.output || s.result){
+        const out = typeof s.output === 'string' ? s.output : JSON.stringify(s.output || s.result, null, 2);
+        html += `<div style="margin-left:30px;padding:4px 8px;background:var(--bg-soft);border-radius:4px;font-size:11px;color:var(--text-light);margin-bottom:4px;max-height:120px;overflow-y:auto;white-space:pre-wrap">${esc(out.substring(0, 500))}</div>`;
+      }
+    });
+    html += '</div>';
+  }
+
+  // 最终输出
+  if(finalOutput){
+    html += `<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-light);margin-bottom:6px">最终输出</div>
+      <div style="padding:10px;background:var(--bg-soft);border-radius:6px;font-size:12px;line-height:1.6;max-height:300px;overflow-y:auto;white-space:pre-wrap;border-left:2px solid var(--primary)">${esc(finalOutput.substring(0, 2000))}</div></div>`;
+  }
+
+  // 原始JSON（折叠）
+  if(r.raw || (!steps.length && !finalOutput)){
+    const raw = r.raw || r;
+    html += `<details style="margin-top:10px"><summary style="font-size:11px;color:var(--text-light);cursor:pointer">原始JSON</summary>
+      <pre style="font-size:11px;background:var(--bg-soft);padding:10px;border-radius:6px;overflow-x:auto;max-height:200px;margin-top:6px">${esc(JSON.stringify(raw, null, 2).substring(0, 3000))}</pre></details>`;
+  }
+
+  el.innerHTML = html || '<span style="color:var(--text-light)">无返回数据</span>';
+}
+
+function clearOrchResult(){
+  _orchCurrentResult = null;
+  document.getElementById('orchResultWrap').style.display = 'none';
+  document.getElementById('orchResult').innerHTML = '';
+}
+
+function sendPlanToVisualize(){
+  if(!_orchCurrentResult){ toast('无结果可发送', 'warn'); return; }
+  const plan = _orchCurrentResult.plan || _orchCurrentResult.data?.plan || _orchCurrentResult;
+  const json = JSON.stringify(plan, null, 2);
+  const visInput = document.getElementById('visualizeInput');
+  if(visInput){
+    visInput.value = json;
+    toast('已发送到可视化面板，请切换查看', 'ok');
+  } else {
+    toast('可视化面板未找到', 'warn');
+  }
+}
+
+function copyOrchResult(){
+  if(!_orchCurrentResult){ toast('无结果可复制', 'warn'); return; }
+  const text = JSON.stringify(_orchCurrentResult, null, 2);
+  navigator.clipboard.writeText(text).then(() => toast('已复制到剪贴板', 'ok')).catch(() => toast('复制失败', 'warn'));
+}
+
+async function loadTemplates(){
+  const btn = event?.target;
+  if(btn){ btn.disabled = true; btn.textContent = '加载中...'; }
+  try{
+    const r = await api('/templates');
+    const list = r.data || r.templates || (Array.isArray(r) ? r : []);
+    const el = document.getElementById('templateList');
+    if(!list || list.length === 0){
+      el.innerHTML = '<div class="empty">暂无已沉淀的模板</div>';
+      return;
+    }
+    el.innerHTML = list.map(t => `
+      <div class="orch-template-item" onclick="useTemplate('${esc(t.name || t.id || '')}')">
+        <div>
+          <div class="orch-template-name">${esc(t.name || t.id || '未命名')}</div>
+          ${t.description ? `<div class="orch-template-desc">${esc(t.description)}</div>` : ''}
+        </div>
+        <span style="font-size:18px;color:var(--text-light)">›</span>
+      </div>
+    `).join('');
+  }catch(e){
+    document.getElementById('templateList').innerHTML = `<div class="empty" style="color:var(--danger)">加载失败: ${esc(e.message)}</div>`;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '刷新'; }
+  }
+}
+
+async function useTemplate(name){
+  if(!name) return;
+  try{
+    const r = await api(`/templates/${encodeURIComponent(name)}`);
+    const tpl = r.data || r.template || r;
+    if(tpl.goal){
+      document.getElementById('agentGoalInput').value = tpl.goal;
+    }
+    if(tpl.mode){
+      selectOrchMode(tpl.mode);
+    }
+    if(tpl.subtasks){
+      const text = (tpl.subtasks || []).map(s => `${s.task} / ${s.specialty||'general'}`).join('\n');
+      document.getElementById('multiAgentSubtasks').value = text;
+    }
+    toast(`已应用模板: ${name}`, 'ok');
+  }catch(e){
+    toast(`加载模板失败: ${e.message}`, 'warn');
+  }
+}
+
 async function loadAgentGraph(){
   ensureMermaid();
   loading('agentMermaidWrap','加载中');

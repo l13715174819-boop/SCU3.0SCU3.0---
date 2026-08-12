@@ -298,7 +298,7 @@ add_text_box(slide, Inches(8.4), Inches(1.6), Inches(4.5), Inches(2.5),
 # 故障处理
 add_card(slide, Inches(8.4), Inches(4.3), Inches(4.5), Inches(2.8),
          "故障处理",
-         "· 心跳超时 30s → OFFLINE\n· 任务迁移 retry()\n· 幂等性：重复 task_id 跳过\n· 状态持久化：\n  scu2_data/distributed_state.json\n· 重启后恢复（标记 offline 待心跳确认）",
+         "· 心跳超时 30s → OFFLINE\n· 任务迁移 retry()\n· 幂等性：重复 task_id 跳过\n· 状态持久化：\n  SCU3_data/distributed_state.json\n· 重启后恢复（标记 offline 待心跳确认）",
          COLOR_DANGER)
 # 分片合并
 add_text_box(slide, Inches(0.6), Inches(5.8), Inches(7.5), Inches(0.4),
@@ -361,7 +361,7 @@ slide = add_slide("八、扩展方案 — 多单元 + 阴阳叠加")
 # 多单元
 add_card(slide, Inches(0.6), Inches(1.2), Inches(12.1), Inches(2.8),
          "多单元：修改 /units 返回多个单元配置",
-         "当前 /units 返回单个 scu2-default。扩展方式：\n\n"
+         "当前 /units 返回单个 SCU3-default。扩展方式：\n\n"
          "· 修改 /units 端点返回多个单元（不同 system_prompt_style / model / domain / force_yin_yang）\n"
          "· 前端已就绪：chatUnit 下拉框 + loadUnits() 已支持多选项\n"
          "· 后端联动：/chat 请求体增加 uid 字段，按 uid 选择配置\n"

@@ -42,10 +42,15 @@ config_local.json
 
 # 运行时数据（用户会话、账本、白名单等）
 scu2_data/
+scu3_data/
 *.json.bak
 
 # 知识库向量索引（二进制文件）
 scu2_data/knowledge/vector_index/*.faiss
+scu3_data/knowledge/vector_index/*.faiss
+
+# 生成文件输出目录（图片等）
+exports/
 
 # 日志文件
 *.log
@@ -94,3 +99,4 @@ coverage.xml
 
 # 截图和图片（文档需要的除外）
 scu2_data/screenshots/
+scu3_data/screenshots/

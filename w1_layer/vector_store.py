@@ -28,10 +28,10 @@ from typing import List, Dict, Any, Tuple, Optional
 
 from datetime import datetime
 
-logger = logging.getLogger("scu2.w1.vector")
+logger = logging.getLogger("SCU3.w1.vector")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VECTOR_INDEX_DIR = os.path.join(BASE_DIR, "scu2_data", "knowledge", "vector_index")
+VECTOR_INDEX_DIR = os.path.join(BASE_DIR, "SCU3_data", "knowledge", "vector_index")
 
 # 默认配置
 DEFAULT_EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
@@ -267,7 +267,7 @@ class VectorKnowledgeStore:
         os.makedirs(self.store_dir, exist_ok=True)
         self._chroma_client = chromadb.PersistentClient(path=self.store_dir)
         self._chroma_collection = self._chroma_client.get_or_create_collection(
-            name="scu2_knowledge",
+            name="SCU3_knowledge",
             metadata={"hnsw:space": "cosine"},
         )
         logger.info("ChromaDB集合初始化完成")
@@ -538,7 +538,7 @@ class VectorKnowledgeStore:
             elif self._storage_backend == "chroma" and self._chroma_collection is not None:
                 # ChromaDB清空重建
                 try:
-                    self._chroma_client.delete_collection("scu2_knowledge")
+                    self._chroma_client.delete_collection("SCU3_knowledge")
                 except Exception:
                     pass
                 self._init_chroma()
@@ -808,7 +808,7 @@ class VectorKnowledgeStore:
     def import_from_directory(self, dir_path: str) -> int:
         """从目录批量导入知识（C3修复：限制在知识库目录内）"""
         # 路径白名单检查
-        allowed_root = os.path.join(BASE_DIR, "scu2_data")
+        allowed_root = os.path.join(BASE_DIR, "SCU3_data")
         abs_path = os.path.abspath(dir_path)
         try:
             common = os.path.commonpath([abs_path, allowed_root])
@@ -1047,7 +1047,7 @@ if __name__ == "__main__":
 
     print("\n[添加文档]")
     docs = [
-        "SCU2是一个自洽认知智能体系统，采用三层架构。",
+        "SCU3是一个自洽认知智能体系统，采用三层架构。",
         "D层是底层约束层，包含公理、契约和账本。",
         "W1层是感知与记忆层，负责RAG检索和上下文管理。",
         "W2层是感知层，处理多模态输入。",
@@ -1058,7 +1058,7 @@ if __name__ == "__main__":
         print(f"  添加 #{did}: {d[:30]}...")
 
     print("\n[搜索测试]")
-    results = store.search("SCU2的架构是怎样的？", top_k=3)
+    results = store.search("SCU3的架构是怎样的？", top_k=3)
     for r in results:
         print(f"  #{r['id']} score={r['score']} vec={r['vector_score']} kw={r['keyword_score']} | {r['content'][:40]}")
 

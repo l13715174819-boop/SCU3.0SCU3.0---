@@ -14,7 +14,7 @@ v5.0第三批：跨节点分布式任务执行能力
   5. 工作节点服务端（WorkerServer）：基于http.server的HTTP接口
   6. 本地多进程模拟分布式（无远程节点时降级使用）
   7. 故障处理：心跳超时检测、任务迁移、幂等性保证
-  8. 状态持久化到 scu2_data/distributed_state.json
+  8. 状态持久化到 SCU3_data/distributed_state.json
 
 架构归属：M层（分布式执行层）
 依赖：标准库（multiprocessing, http.server, urllib.request, json）
@@ -33,7 +33,7 @@ from datetime import datetime
 from urllib import request as url_request
 from urllib.error import URLError, HTTPError
 
-logger = logging.getLogger("scu2.m.distributed")
+logger = logging.getLogger("SCU3.m.distributed")
 
 
 # ─── 默认配置 ────────────────────────────────────
@@ -1105,7 +1105,7 @@ class DistributedExecutor:
         """
         if data_dir is None:
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            data_dir = os.path.join(base, "scu2_data")
+            data_dir = os.path.join(base, "SCU3_data")
         self._data_dir = data_dir
         os.makedirs(self._data_dir, exist_ok=True)
         self._state_file = os.path.join(self._data_dir, "distributed_state.json")

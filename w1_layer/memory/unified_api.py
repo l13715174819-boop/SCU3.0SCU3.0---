@@ -13,7 +13,7 @@ from w1_layer.memory.l1_working import L1WorkingStore
 from w1_layer.memory.l2_semantic import L2SemanticStore
 from w1_layer.memory.l3_episodic import L3EpisodicStore
 
-logger = logging.getLogger("scu2.w1.memory")
+logger = logging.getLogger("SCU3.w1.memory")
 
 
 class MemoryStore:
@@ -21,7 +21,7 @@ class MemoryStore:
 
     def __init__(self, data_dir: str = "", l1_max_turns: int = 20):
         base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        self.data_dir = data_dir or os.path.join(base, "scu2_data", "memory")
+        self.data_dir = data_dir or os.path.join(base, "SCU3_data", "memory")
         os.makedirs(self.data_dir, exist_ok=True)
 
         self.l1 = L1WorkingStore(max_turns=l1_max_turns)

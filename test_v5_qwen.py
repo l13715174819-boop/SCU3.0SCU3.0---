@@ -94,7 +94,7 @@ vs = get_vector_store()
 print(f"  向量库: backend={vs._storage_backend}, embed={vs._embed_backend}, docs={len(vs._documents)}")
 
 # 检索知识
-query = "SCU2的架构是什么？"
+query = "SCU3的架构是什么？"
 context = vs.get_context(query, max_length=500)
 print(f"  检索查询: {query}")
 print(f"  检索上下文: {context[:150]}...")

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SCU2 全新模块端到端测试
+SCU3 全新模块端到端测试
 ========================
 覆盖第三批+第四批所有新功能模块的核心场景验证：
   1. 工具权限分级（tool_permissions）
@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
-logger = logging.getLogger("scu2.test")
+logger = logging.getLogger("SCU3.test")
 
 # 测试统计
 PASSED = 0
@@ -316,7 +316,7 @@ def test_voice_io():
         samples.append(struct.pack('<h', val))
 
     # Windows 文件锁问题：先写到临时文件，关闭后再读取再删除
-    tmp_path = os.path.join(tempfile.gettempdir(), f"scu2_test_{int(time.time()*1000)}.wav")
+    tmp_path = os.path.join(tempfile.gettempdir(), f"SCU3_test_{int(time.time()*1000)}.wav")
     with wave.open(tmp_path, 'wb') as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)
@@ -418,7 +418,7 @@ def test_integration():
 # ─── 主函数 ────────────────────────────────────
 def main():
     print("=" * 60)
-    print("SCU2 全新模块端到端测试")
+    print("SCU3 全新模块端到端测试")
     print("=" * 60)
 
     start = time.time()

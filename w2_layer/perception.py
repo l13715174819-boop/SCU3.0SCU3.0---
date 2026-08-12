@@ -9,7 +9,7 @@ import re
 import logging
 from typing import Dict, Any
 
-logger = logging.getLogger("scu2.w2.perception")
+logger = logging.getLogger("SCU3.w2.perception")
 
 
 class PerceptionLayer:
@@ -88,6 +88,9 @@ class PerceptionLayer:
         # 二维码意图（需插件市场）
         if re.search(r"二维码|qrcode|生成码", text, re.I):
             return "qrcode"
+        # 图片生成意图（AI文生图）
+        if re.search(r"生成.*图片|画.*张|画.*幅|画.*个|生成.*图|创建.*图片|制作.*图片|画.*图|draw|generate.*image|文生图|AI画", text, re.I):
+            return "image_generation"
         # 图片处理意图（需插件市场）
         if re.search(r"处理图片|缩放图片|裁剪图片|图片转格式|image process|\.(?:png|jpg|jpeg|gif|bmp)", text, re.I):
             return "image_process"
@@ -96,9 +99,9 @@ class PerceptionLayer:
             return "md_render"
         if re.search(r"你好|hello|hi|介绍", text, re.I):
             return "greeting"
-        # 本地知识查询：含项目专属词（SCU2/CUF/架构/守卫/三级记忆等）→ 走 RAG 知识库
+        # 本地知识查询：含项目专属词（SCU3/CUF/架构/守卫/三级记忆等）→ 走 RAG 知识库
         # 这类问题本地知识库有权威答案，不应优先联网
-        if re.search(r"SCU2|CUF|本系统|本程序|本架构|三级记忆|L1|L2|L3|守卫|D层|M层|W1|W2|熵税|阴阳|Pair|自进化|自修改|插件市场|向量库", text, re.I):
+        if re.search(r"SCU3|CUF|本系统|本程序|本架构|三级记忆|L1|L2|L3|守卫|D层|M层|W1|W2|熵税|阴阳|Pair|自进化|自修改|插件市场|向量库", text, re.I):
             return "knowledge_query"
         # 领域触发词自动成为 web_search 意图触发词
         # 这样"酒店/住宿/宾馆"等高意图词无需搜索动词也能触发联网搜索

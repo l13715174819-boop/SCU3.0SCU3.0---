@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-test_scu2.py — 标准计算单元2 验证脚本
+test_SCU3.py — 标准计算单元2 验证脚本
 =======================================
 验证 v3 架构所有修复点
 """
@@ -22,7 +22,7 @@ def test(name, cond, detail=""):
 
 
 def main():
-    banner("SCU2 标准计算单元2 · v3 架构验证")
+    banner("SCU3 标准计算单元2 · v3 架构验证")
     r = []
 
     # ─── 测试 1: 基础聊天（数据流管道完整）────────
@@ -116,7 +116,7 @@ def main():
 
 
 if __name__ == "__main__":
-    print("等待 SCU2 服务启动...")
+    print("等待 SCU3 服务启动...")
     for _ in range(30):
         try:
             requests.get(f"{BASE}/status", timeout=1)
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         except:
             time.sleep(1)
     else:
-        print("❌ SCU2 服务未启动，请先运行: python server.py")
+        print("❌ SCU3 服务未启动，请先运行: python server.py")
         sys.exit(1)
     success = main()
     sys.exit(0 if success else 1)

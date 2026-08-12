@@ -26,10 +26,10 @@ import logging
 import threading
 from typing import Dict, Any, List, Optional, Callable
 
-logger = logging.getLogger("scu2.m.module_registry")
+logger = logging.getLogger("SCU3.m.module_registry")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 STATE_PATH = os.path.join(DATA_DIR, "module_registry.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -385,7 +385,7 @@ def get_registry() -> ModuleRegistry:
 
 
 def register_builtin_modules():
-    """注册 SCU2 内置功能模块（启动时调用一次）"""
+    """注册 SCU3 内置功能模块（启动时调用一次）"""
     registry = get_registry()
 
     # 浏览器自动化
@@ -541,24 +541,24 @@ def register_builtin_modules():
 
     logger.info(f"已注册 {len(registry.list_modules())} 个内置模块")
 
-    # .env 配置驱动：读取 SCU2_DISABLED_MODULES 环境变量，禁用指定模块
-    # 格式：SCU2_DISABLED_MODULES="automation.browser,voice.listener,llm.local_model"
-    # 也支持 SCU2_ENABLED_ONLY（白名单模式，仅启用指定模块）
-    disabled_env = os.environ.get("SCU2_DISABLED_MODULES", "").strip()
-    enabled_only_env = os.environ.get("SCU2_ENABLED_ONLY", "").strip()
+    # .env 配置驱动：读取 SCU3_DISABLED_MODULES 环境变量，禁用指定模块
+    # 格式：SCU3_DISABLED_MODULES="automation.browser,voice.listener,llm.local_model"
+    # 也支持 SCU3_ENABLED_ONLY（白名单模式，仅启用指定模块）
+    disabled_env = os.environ.get("SCU3_DISABLED_MODULES", "").strip()
+    enabled_only_env = os.environ.get("SCU3_ENABLED_ONLY", "").strip()
 
     if disabled_env:
         disabled_list = [m.strip() for m in disabled_env.split(",") if m.strip()]
         for mod_name in disabled_list:
             if mod_name in registry._modules and mod_name not in PROTECTED_MODULES:
                 registry._modules[mod_name].disabled = True
-                logger.info(f"根据 SCU2_DISABLED_MODULES 禁用模块: {mod_name}")
+                logger.info(f"根据 SCU3_DISABLED_MODULES 禁用模块: {mod_name}")
 
     if enabled_only_env:
         enabled_list = set(m.strip() for m in enabled_only_env.split(",") if m.strip())
         for mod_name, mod_info in registry._modules.items():
             if mod_name not in enabled_list and mod_name not in PROTECTED_MODULES:
                 mod_info.disabled = True
-                logger.info(f"根据 SCU2_ENABLED_ONLY 白名单禁用模块: {mod_name}")
+                logger.info(f"根据 SCU3_ENABLED_ONLY 白名单禁用模块: {mod_name}")
 
     return registry

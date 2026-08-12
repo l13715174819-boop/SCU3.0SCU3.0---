@@ -2,7 +2,7 @@
 """
 w1_layer/automation.py — 自动化能力集（W1层）
 ================================================
-v5.1 新增：补齐 SCU2 "像 Agent 一样看屏幕/开浏览器/抓网页/控桌面" 的能力。
+v5.1 新增：补齐 SCU3 "像 Agent 一样看屏幕/开浏览器/抓网页/控桌面" 的能力。
 
 包含四个独立子模块（互不依赖，可单独使用）：
 
@@ -37,11 +37,11 @@ import logging
 import threading
 from typing import Optional, List, Dict, Any, Tuple, Union
 
-logger = logging.getLogger("scu2.w1.automation")
+logger = logging.getLogger("SCU3.w1.automation")
 
 # 项目路径
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 SCREENSHOT_DIR = os.path.join(DATA_DIR, "screenshots")
 os.makedirs(SCREENSHOT_DIR, exist_ok=True)
 

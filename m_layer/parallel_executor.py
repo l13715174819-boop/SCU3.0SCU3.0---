@@ -22,7 +22,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List, Optional, Set
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.parallel")
+logger = logging.getLogger("SCU3.m.parallel")
 
 
 class ParallelExecutor:

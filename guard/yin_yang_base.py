@@ -16,7 +16,7 @@ CUF 合规：
 import logging
 from typing import Dict, Any
 
-logger = logging.getLogger("scu2.guard.yin_yang_base")
+logger = logging.getLogger("SCU3.guard.yin_yang_base")
 
 
 class YinYangEndorser:

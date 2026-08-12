@@ -13,7 +13,7 @@ m_layer/multimodal.py — 多模态理解模块（M层）
   4. AudioUnderstanding 音频理解（wave + pydub/speech_recognition 可选）
   5. VideoUnderstanding 视频理解（cv2 可选）
   6. 多模态融合（text+image / text+audio / mixed）
-  7. 结果缓存到 scu2_data/multimodal_cache.json
+  7. 结果缓存到 SCU3_data/multimodal_cache.json
 
 降级策略：
   - PIL 不可用        → 仅提取图像元数据
@@ -33,11 +33,11 @@ import struct
 from typing import Dict, Any, Optional, List, Tuple, Union
 from datetime import datetime
 
-logger = logging.getLogger("scu2.m.multimodal")
+logger = logging.getLogger("SCU3.m.multimodal")
 
 # 项目根目录与数据目录
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "scu2_data")
+DATA_DIR = os.path.join(BASE_DIR, "SCU3_data")
 CACHE_PATH = os.path.join(DATA_DIR, "multimodal_cache.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 

@@ -63,14 +63,14 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 ### 2.1 D 层 — 基线层（只读）
 
-路径：`scu2/d_layer/`
+路径：`SCU3/d_layer/`
 
 | 文件 | 职责 |
 |------|------|
-| [axioms.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/d_layer/axioms.py) | 四公理 + 四契约枚举 + 层级定义 + `Operation`/`TaxBreakdown` 数据类 + 基础税率表 + 经济常量 |
-| [contracts.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/d_layer/contracts.py) | 四契约详细规范 + `validate_contracts()` |
-| [ledger_base.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/d_layer/ledger_base.py) | 账本抽象基类 `LedgerBase`（接口签名，无运行时状态） |
-| [MANIFEST.json](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/d_layer/MANIFEST.json) | 文件清单 + 固化 `expected_hashes` + 禁止项 + 完整性校验配置 |
+| [axioms.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/d_layer/axioms.py) | 四公理 + 四契约枚举 + 层级定义 + `Operation`/`TaxBreakdown` 数据类 + 基础税率表 + 经济常量 |
+| [contracts.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/d_layer/contracts.py) | 四契约详细规范 + `validate_contracts()` |
+| [ledger_base.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/d_layer/ledger_base.py) | 账本抽象基类 `LedgerBase`（接口签名，无运行时状态） |
+| [MANIFEST.json](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/d_layer/MANIFEST.json) | 文件清单 + 固化 `expected_hashes` + 禁止项 + 完整性校验配置 |
 
 **四公理约束**：
 - **A1 基线不可变性**：禁止 W2/M 修改 D 层代码
@@ -86,36 +86,36 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 ### 2.2 M 层 — 元认知/认知层
 
-路径：`scu2/m_layer/`
+路径：`SCU3/m_layer/`
 
 | 文件 | 职责 |
 |------|------|
-| [cognition.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/cognition.py) | 认知层核心：多策略综合注入 LLM、阴阳对子思考、兜底联网搜索、插件市场闭环 |
-| [metacognition.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/metacognition.py) | 元认知层：业务路径与 CUF 路径汇合、周期审计、补偿退款 |
-| [cognition_endorser.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/cognition_endorser.py) | 阴阳双签实现（继承 `YinYangEndorser`），按批判/支持词汇+分点论证+因果论证+字数评分 |
-| [distributed_executor.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/distributed_executor.py) | 分布式执行器（Worker 节点管理、任务分片、负载均衡、结果合并） |
-| [plugin_market.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/plugin_market.py) | 插件市场（能力匹配、自动安装加载、经验沉淀、TTL 卸载） |
-| [code_self_modify.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/code_self_modify.py) | 代码自修改引擎（D 层保护清单、危险模式黑名单、阴阳双签+人工审批） |
-| [self_evolution.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/self_evolution.py) | 自进化引擎（缺陷分析+提案生成，触发阈值 fail_count≥3） |
-| [experience_store.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/experience_store.py) | 经验沉淀（衰减 30 天，成熟阈值 2 次） |
-| [module_registry.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/module_registry.py) | 模块注册表（受保护模块不可卸载） |
-| [llm_client.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/llm_client.py) | 多平台 LLM 客户端（DeepSeek/Qwen/本地 Qwen2.5） |
+| [cognition.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/cognition.py) | 认知层核心：多策略综合注入 LLM、阴阳对子思考、兜底联网搜索、插件市场闭环 |
+| [metacognition.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/metacognition.py) | 元认知层：业务路径与 CUF 路径汇合、周期审计、补偿退款 |
+| [cognition_endorser.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/cognition_endorser.py) | 阴阳双签实现（继承 `YinYangEndorser`），按批判/支持词汇+分点论证+因果论证+字数评分 |
+| [distributed_executor.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/distributed_executor.py) | 分布式执行器（Worker 节点管理、任务分片、负载均衡、结果合并） |
+| [plugin_market.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/plugin_market.py) | 插件市场（能力匹配、自动安装加载、经验沉淀、TTL 卸载） |
+| [code_self_modify.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/code_self_modify.py) | 代码自修改引擎（D 层保护清单、危险模式黑名单、阴阳双签+人工审批） |
+| [self_evolution.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/self_evolution.py) | 自进化引擎（缺陷分析+提案生成，触发阈值 fail_count≥3） |
+| [experience_store.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/experience_store.py) | 经验沉淀（衰减 30 天，成熟阈值 2 次） |
+| [module_registry.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/module_registry.py) | 模块注册表（受保护模块不可卸载） |
+| [llm_client.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/llm_client.py) | 多平台 LLM 客户端（DeepSeek/Qwen/本地 Qwen2.5） |
 
 ### 2.3 W1 层 — 工作层（记忆 + 执行）
 
-路径：`scu2/w1_layer/`
+路径：`SCU3/w1_layer/`
 
 | 文件 | 职责 |
 |------|------|
-| [ledger_runtime.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/w1_layer/ledger_runtime.py) | 熵税账本运行时（五维计税 base×depth×state×custom，保底余额限频 5次/小时，哈希链） |
-| [action.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/w1_layer/action.py) | 执行层（14 种工具 + 降级链 + 沙箱 AST 预检 + 路径安全 `commonpath`） |
-| [memory/](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/w1_layer/memory/) | 三级记忆（L1工作/L2语义/L3情景） |
-| [knowledge_store.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/w1_layer/knowledge_store.py) | RAG 知识库（TF-IDF + 中文 2-gram 分词） |
-| [vector_store.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/w1_layer/vector_store.py) | 向量版知识库（FAISS 索引 + 迁移工具） |
+| [ledger_runtime.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/w1_layer/ledger_runtime.py) | 熵税账本运行时（五维计税 base×depth×state×custom，保底余额限频 5次/小时，哈希链） |
+| [action.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/w1_layer/action.py) | 执行层（14 种工具 + 降级链 + 沙箱 AST 预检 + 路径安全 `commonpath`） |
+| [memory/](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/w1_layer/memory/) | 三级记忆（L1工作/L2语义/L3情景） |
+| [knowledge_store.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/w1_layer/knowledge_store.py) | RAG 知识库（TF-IDF + 中文 2-gram 分词） |
+| [vector_store.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/w1_layer/vector_store.py) | 向量版知识库（FAISS 索引 + 迁移工具） |
 
 ### 2.4 W2 层 — 感知入口
 
-路径：`scu2/w2_layer/perception.py`
+路径：`SCU3/w2_layer/perception.py`
 
 `PerceptionLayer.process()` 接收用户输入 → 意图识别：
 - **12+ 种意图**：followup / analytical / calculate / weather / time / text_stats / document_read / translate / qrcode / image_process / md_render / greeting / knowledge_query / web_search
@@ -130,11 +130,11 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 | # | 守卫点 | 位置 | 触发条件 | 实现文件 |
 |---|--------|------|----------|----------|
-| ① | W2→W1 跨层审计 | 数据流管道 | 跨 CUF 层 | [firewall.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/guard/firewall.py) |
-| ② | W1→M 跨层审计 | 数据流管道 | 跨 CUF 层 | [firewall.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/guard/firewall.py) |
-| ③ | 工具守卫 | 工具调用前 | 无论同层与否 | [tool_guard.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/guard/tool_guard.py) |
-| ④ | 周期审计 | 定时器 | M→W1 同层免审 | [metacognition.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/metacognition.py) |
-| ⑤ | 内容过滤 | 输出脱敏 | 响应生成后 | [content_filter.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/guard/content_filter.py) |
+| ① | W2→W1 跨层审计 | 数据流管道 | 跨 CUF 层 | [firewall.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/guard/firewall.py) |
+| ② | W1→M 跨层审计 | 数据流管道 | 跨 CUF 层 | [firewall.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/guard/firewall.py) |
+| ③ | 工具守卫 | 工具调用前 | 无论同层与否 | [tool_guard.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/guard/tool_guard.py) |
+| ④ | 周期审计 | 定时器 | M→W1 同层免审 | [metacognition.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/metacognition.py) |
+| ⑤ | 内容过滤 | 输出脱敏 | 响应生成后 | [content_filter.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/guard/content_filter.py) |
 
 ### 3.2 CUF 逻辑防火墙（CUFGuard）
 
@@ -166,7 +166,7 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 ### 3.5 阴阳双签基类
 
-文件：[yin_yang_base.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/guard/yin_yang_base.py)
+文件：[yin_yang_base.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/guard/yin_yang_base.py)
 
 - `YIN_THRESHOLD = 0.75`（阴方通过阈值）
 - `YANG_THRESHOLD = 0.65`（阳方通过阈值）
@@ -220,7 +220,7 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 ## 五、分布式执行
 
-文件：[distributed_executor.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/scu2/m_layer/distributed_executor.py)
+文件：[distributed_executor.py](file:///C:/Users/若水/AppData/Roaming/TRAE%20SOLO%20CN/ModularData/ai-agent/work-mode-projects/6a77f42497bc426f3121fb5d/SCU3/m_layer/distributed_executor.py)
 
 ### 5.1 核心组件
 
@@ -255,7 +255,7 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 - 心跳超时 30s → 标记 OFFLINE → 任务迁移 `retry()`
 - 幂等性：`_results` 缓存，重复 task_id 跳过分发
-- 状态持久化：`scu2_data/distributed_state.json`，重启后恢复（标记 offline 待心跳确认）
+- 状态持久化：`SCU3_data/distributed_state.json`，重启后恢复（标记 offline 待心跳确认）
 
 ---
 
@@ -297,7 +297,7 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 ### 7.1 当前状态
 
-后端 `/units` 接口当前返回**单个单元** `scu2-default`（SCU2 标准单元），无认证。
+后端 `/units` 接口当前返回**单个单元** `SCU3-default`（SCU3 标准单元），无认证。
 
 前端 `chatUnit` 下拉框已预留多单元选择能力：
 - 默认选项："自动选择"（value 为空）
@@ -307,7 +307,7 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 | 概念 | 数量 | 说明 |
 |------|------|------|
-| SCU 单元 | 1 个（当前） | 系统部署的处理单元，`scu2-default` |
+| SCU 单元 | 1 个（当前） | 系统部署的处理单元，`SCU3-default` |
 | LLM 调用 | 2 个 API（阴阳对子时） | DeepSeek(阴) + Qwen(阳)，认知层内部双签 |
 
 阴阳对子是**单单元内部**调用了两个 LLM API，不是两个独立 SCU 单元并行运行。
@@ -346,11 +346,11 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 - 能力声明：`cpu/memory/gpu/special_tools`
 - 故障处理：心跳超时 30s → OFFLINE → 任务迁移
 - 幂等性：重复 task_id 跳过分发
-- 状态持久化：`scu2_data/distributed_state.json`
+- 状态持久化：`SCU3_data/distributed_state.json`
 
 ### 8.2 多单元：修改 /units 返回多个单元配置
 
-当前 `/units` 返回单个 `scu2-default`。扩展方式：
+当前 `/units` 返回单个 `SCU3-default`。扩展方式：
 
 1. **修改 `/units` 端点**返回多个单元：
    ```python
@@ -360,10 +360,10 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
            "success": True,
            "data": {
                "units": [
-                   {"uid": "scu2-default", "system_prompt_style": "SCU2 标准单元"},
-                   {"uid": "scu2-coding", "system_prompt_style": "coding", "model": "deepseek-coder"},
-                   {"uid": "scu2-analytical", "system_prompt_style": "analytical", "force_yin_yang": True},
-                   {"uid": "scu2-medical", "system_prompt_style": "medical", "domain": "medical"},
+                   {"uid": "SCU3-default", "system_prompt_style": "SCU3 标准单元"},
+                   {"uid": "SCU3-coding", "system_prompt_style": "coding", "model": "deepseek-coder"},
+                   {"uid": "SCU3-analytical", "system_prompt_style": "analytical", "force_yin_yang": True},
+                   {"uid": "SCU3-medical", "system_prompt_style": "medical", "domain": "medical"},
                ],
            },
        })
@@ -374,7 +374,7 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 3. **后端联动扩展**（需新增）：
    - `/chat` 请求体增加 `uid` 字段，按 uid 选择 system_prompt/平台/领域
    - 不同单元可绑定不同 LLM 平台、不同领域插件配置、不同税率覆写
-   - 单元配置持久化到 `scu2_data/units.json`
+   - 单元配置持久化到 `SCU3_data/units.json`
 
 4. **隔离级别**：
    - 软隔离（当前）：共享 ledger/记忆/知识库
@@ -405,14 +405,14 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 ### 9.1 API Key 认证
 
-- **双 Key 体系**：普通 `SCU2_API_KEY` + 管理员 `SCU2_ADMIN_API_KEY`
+- **双 Key 体系**：普通 `SCU3_API_KEY` + 管理员 `SCU3_ADMIN_API_KEY`
 - **时序攻击防护**：`secrets.compare_digest()` 防时序侧信道
 - **开发模式默认 Key**：启动时显著告警
 - **敏感端点**：`/whitelist/add`、`/whitelist/list`、`/audit/daily`、`/status`、`/history`、`/knowledge/import`、`/knowledge/delete`
 
 ### 9.2 文件操作限制
 
-- **SANDBOX_DIR 隔离**：`scu2_data/sandbox/`
+- **SANDBOX_DIR 隔离**：`SCU3_data/sandbox/`
 - **`_safe_path()`**：绝对路径必须在项目目录内，用 `commonpath` 防前缀碰撞
 - **沙箱执行**：AST 预检（拒绝属性访问/dunder/危险函数/import）+ 安全内置函数白名单 + 5 秒超时
 
@@ -422,7 +422,7 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 - **危险模式黑名单**：eval/exec/compile/globals/`__import__` 等
 - **文件扩展名白名单**：`{".py"}`
 - **阴阳双签 + 人工审批**：高风险操作必须 Yin(γ≥0.75) + Yang(γ≥0.65) 双通过
-- **备份回滚**：修改前自动备份到 `scu2_data/backups/`
+- **备份回滚**：修改前自动备份到 `SCU3_data/backups/`
 
 ### 9.4 内容过滤
 
@@ -441,7 +441,7 @@ SCU3.0 采用 **CUF（Compute Unit Fabric）三维度分离架构**，将以下�
 
 - **默认监听 127.0.0.1**（生产环境建议用反向代理）
 - **0.0.0.0 告警**：监听 `0.0.0.0` 或 `::` 时显著告警
-- **默认端口 8300**（`SCU2_PORT` 环境变量可覆盖）
+- **默认端口 8300**（`SCU3_PORT` 环境变量可覆盖）
 
 ---
 
