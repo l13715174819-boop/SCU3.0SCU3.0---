@@ -273,8 +273,20 @@ def process_request(prompt: str, user_id: str = "default_user") -> Dict[str, Any
     except Exception as e:
         logger.debug(f"插件钩子 on_message 异常: {e}")
 
-    # ① W2 感知层
-    ctx = perception.process(prompt, {"user_id": user_id})
+    # 获取最近对话历史（用于 LLM 语义推理区分追问 vs 新话题）
+    # 取最近会话的6条消息（约3轮），传给感知层
+    recent_history = []
+    try:
+        from m_layer.conversation_context import get_conversation_manager
+        cm = get_conversation_manager()
+        sessions = cm.list_sessions(user_id, limit=1)
+        if sessions:
+            recent_history = cm.get_history_for_llm(sessions[0]["session_id"], limit=6)
+    except Exception as e:
+        logger.debug(f"获取对话历史失败（不阻塞）: {e}")
+
+    # ① W2 感知层（传入历史，支持 LLM 语义推理区分追问 vs 新话题）
+    ctx = perception.process(prompt, {"user_id": user_id}, history=recent_history)
 
     # 图片生成意图：直接调用图片生成工具，跳过LLM流程
     if ctx.get("intent") == "image_generation":
@@ -316,6 +328,89 @@ def process_request(prompt: str, user_id: str = "default_user") -> Dict[str, Any
         except Exception as e:
             logger.error(f"图片生成失败，降级到LLM对话: {e}", exc_info=True)
             ctx["intent"] = "conversation"  # 降级到普通对话
+
+    # 工作流自动触发：感知层识别为 workflow:<preset_id> 时，直接调用预置工作流
+    # 复用已修复的 CUF 审批链路（run_with_cuf_audit），不绕过守卫
+    intent = ctx.get("intent", "")
+    logger.info(f"[工作流路由检查] intent={intent!r}, prompt={prompt[:50]!r}")
+    if intent.startswith("workflow:"):
+        try:
+            from m_layer.agent_presets import build_request
+            from m_layer.multi_agent import quick_multi_agent, quick_mixed_agents
+            from guard.workflow_guard import run_with_cuf_audit
+
+            preset_id = intent.split(":", 1)[1]
+            # 提取主题：去掉触发词前缀，保留核心描述
+            topic = _extract_workflow_topic(prompt)
+            if not topic:
+                topic = prompt  # 回退到原始输入
+
+            request_body = build_request(preset_id, topic)
+            if not request_body:
+                logger.warning(f"工作流自动触发失败：预置工作流不存在 preset_id={preset_id}")
+                ctx["intent"] = "conversation"  # 降级
+            else:
+                logger.info(f"对话流自动触发工作流: preset={preset_id}, topic={topic[:50]}")
+                subtasks = request_body["subtasks"]
+                has_isolation = any("isolation" in st for st in subtasks)
+                wf_op_id = f"chat_wf_{preset_id}_{int(time.time())}"
+
+                def _execute_workflow():
+                    if has_isolation:
+                        result = quick_mixed_agents(subtasks)
+                    else:
+                        result = quick_multi_agent(subtasks, mode=request_body["mode"])
+                    if isinstance(result, dict):
+                        result["preset_id"] = preset_id
+                        result["preset_name"] = request_body["goal"]
+                    return result
+
+                wf_result = run_with_cuf_audit(
+                    guard=guard, tool_guard=tool_guard,
+                    op_id=wf_op_id, goal=request_body["goal"],
+                    subtasks=subtasks, execute_fn=_execute_workflow,
+                )
+
+                # 构造对话流响应：把工作流结果转为对话框可展示的完整报告
+                if isinstance(wf_result, dict) and wf_result.get("success"):
+                    # 优先拼接各子任务的完整输出，生成完整报告（用户要求"结果直接展示完整报告"）
+                    final_output = _format_workflow_report(wf_result, request_body)
+                    ctx["response"] = final_output or "工作流执行完成，但未生成输出内容。"
+                    ctx["cognition_ok"] = True
+                    ctx["llm_mode"] = f"workflow:{preset_id}"
+                    ctx["workflow_result"] = {
+                        "preset_id": preset_id,
+                        "preset_name": request_body["goal"],
+                        "cuf_audited": wf_result.get("cuf_audited", False),
+                        "cuf_traces": wf_result.get("cuf_traces", []),
+                        "execution_time": wf_result.get("execution_time", 0),
+                        "completed": wf_result.get("completed", 0),
+                        "failed": wf_result.get("failed", 0),
+                    }
+                    # 透传 CUF 审计轨迹到顶层（供 SSE meta 帧携带）
+                    cuf_traces.extend(wf_result.get("cuf_traces", []))
+                else:
+                    # 工作流失败或被 CUF 拦截，降级到普通对话
+                    err = wf_result.get("error", "未知错误") if isinstance(wf_result, dict) else str(wf_result)
+                    logger.warning(f"工作流自动触发失败，降级到对话: {err}")
+                    ctx["intent"] = "conversation"
+                    ctx["workflow_error"] = err
+                    # 若被 CUF 拦截，直接返回拦截信息
+                    if isinstance(wf_result, dict) and wf_result.get("cuf_blocked"):
+                        ctx["response"] = f"⚠ 工作流被 CUF 守卫拦截：{err}\n\n请稍后重试或调整输入。"
+                        ctx["cognition_ok"] = True
+                        ctx["llm_mode"] = "workflow_blocked"
+                        cuf_traces.extend(wf_result.get("cuf_traces", []))
+                        merged = metacog.merge(ctx, cuf_traces, op_id)
+                        return _build_response(merged, op_id, start)
+
+                # 工作流成功，直接返回（跳过后续 LLM 流程）
+                if ctx.get("response"):
+                    merged = metacog.merge(ctx, cuf_traces, op_id)
+                    return _build_response(merged, op_id, start)
+        except Exception as e:
+            logger.error(f"工作流自动触发异常，降级到对话: {e}", exc_info=True)
+            ctx["intent"] = "conversation"  # 降级
 
     # ② 守卫①：W2→W1 跨层审计
     op1 = Operation(
@@ -430,6 +525,156 @@ def process_request(prompt: str, user_id: str = "default_user") -> Dict[str, Any
     return _build_response(merged, op_id, start)
 
 
+def _extract_workflow_topic(prompt: str) -> str:
+    """从用户输入中提取工作流主题（去掉触发词前缀）
+
+    示例：
+      "深度研究 Python异步编程" → "Python异步编程"
+      "分析一下人工智能的发展趋势" → "人工智能的发展趋势"
+      "完整代码方案 用户登录系统" → "用户登录系统"
+      "研究一下" → "" (无主题，调用方回退到原始输入)
+    """
+    import re as _re
+    text = prompt.strip()
+
+    # 强信号词前缀（按长度降序匹配，避免短词先匹配）
+    strong_prefixes = [
+        r"深度研究(?:报告)?", r"全面调研", r"深度调研", r"专题研究",
+        r"研究报告", r"研究一下", r"调研一下", r"深入调研",
+        r"完整代码方案", r"代码方案", r"实现方案", r"技术方案",
+        r"写个方案", r"给个方案", r"完整方案",
+        r"决策分析", r"帮我决策", r"帮我做决定", r"决策一下",
+        r"决定一下", r"帮我选择", r"选择分析",
+        r"创作一篇", r"写一篇", r"写篇文章", r"创作内容",
+        r"写个文案",
+        r"排查bug", r"调试问题", r"排查问题", r"bug排查",
+        r"调试bug", r"定位bug", r"排查一下",
+        r"学习路径", r"学习路线", r"系统学习", r"学习计划",
+        r"学习规划", r"怎么学", r"学习指南",
+    ]
+    # 宽松动词前缀
+    loose_prefixes = [
+        r"分析一下", r"研究一下", r"调研一下", r"写一下",
+        r"了解一下", r"梳理一下", r"梳理下", r"整理一下",
+        r"整理下", r"探讨一下", r"讨论一下",
+    ]
+
+    all_prefixes = strong_prefixes + loose_prefixes
+    for prefix in all_prefixes:
+        m = _re.match(rf"^{prefix}[\s，,：:的了吧呢啊哈]*", text, _re.I)
+        if m:
+            topic = text[m.end():].strip()
+            if len(topic) >= 2:
+                return topic
+            break  # 匹配到前缀但主题太短，退出循环
+    return ""
+
+
+# 工作流子任务 specialty 中文标签（用于报告标题）
+_SPECIALTY_LABELS = {
+    "search": "资料搜集",
+    "analysis": "深度分析",
+    "writing": "报告撰写",
+    "coding": "代码实现",
+    "general": "综合处理",
+}
+
+
+def _extract_subtask_output(r: Dict) -> str:
+    """从单个子任务结果（task_executor report）中提取可读输出文本
+
+    task_executor 返回的 report 结构：
+      {goal, success, steps:[{action, status, result:{output/abs_path/...}}], ...}
+    优先取最后一步的 result.output；其次取 result.abs_path（文件写入）；
+    再退到 goal 作为占位。
+    """
+    if not isinstance(r, dict):
+        return ""
+    # 直接 output 字段（部分简化路径）
+    output = r.get("output")
+    if output and isinstance(output, str) and len(output) >= 10:
+        return output
+    # 从 steps 中提取最后一步的有效输出
+    steps = r.get("steps") or []
+    for step in reversed(steps):
+        if not isinstance(step, dict):
+            continue
+        result = step.get("result")
+        if isinstance(result, dict):
+            out = result.get("output")
+            if out and isinstance(out, str) and len(out) >= 10:
+                return out
+            abs_path = result.get("abs_path")
+            if abs_path:
+                return f"(已生成文件: {abs_path})"
+    # 退化：返回 goal 作为占位
+    goal = r.get("goal", "")
+    return f"(任务目标: {goal})" if goal else ""
+
+
+def _format_workflow_report(wf_result: Dict, request_body: Dict) -> str:
+    """把工作流执行结果格式化为对话框可展示的完整报告
+
+    结构：
+      # 工作流报告：<preset_name>
+      > 主题：<topic> | 子任务：<completed>/<total> 成功 | 耗时：<x>s
+      ---
+      ## 【资料搜集】<subtask_goal>
+      <output>
+      ## 【深度分析】<subtask_goal>
+      <output>
+      ...
+    """
+    parts = []
+    preset_name = request_body.get("goal", "工作流执行报告")
+    completed = wf_result.get("completed", 0)
+    total = wf_result.get("total_subtasks", 0)
+    failed = wf_result.get("failed", 0)
+    elapsed_ms = wf_result.get("elapsed_ms") or wf_result.get("execution_time", 0)
+    elapsed_s = round(elapsed_ms / 1000, 1) if isinstance(elapsed_ms, (int, float)) else "?"
+    cuf_audited = wf_result.get("cuf_audited", False)
+
+    # 报告头
+    header = f"# 工作流报告：{preset_name}\n"
+    header += f"> 子任务：{completed}/{total} 成功"
+    if failed:
+        header += f"，{failed} 失败"
+    header += f" | 耗时：{elapsed_s}s"
+    if cuf_audited:
+        header += " | CUF审计✓"
+    header += "\n\n---\n"
+    parts.append(header)
+
+    # 各子任务输出
+    results = wf_result.get("results") or {}
+    if results:
+        # 按 subtasks 原始顺序输出（results 是 dict，顺序可能乱）
+        subtasks_order = wf_result.get("subtasks") or []
+        ordered_sids = [st.get("subtask_id", "") for st in subtasks_order if isinstance(st, dict)]
+        sids = [sid for sid in ordered_sids if sid in results]
+        sids += [sid for sid in results.keys() if sid not in sids]  # 补充未在 order 中的
+
+        for sid in sids:
+            r = results.get(sid)
+            if not isinstance(r, dict):
+                continue
+            specialty = r.get("specialty", "general")
+            label = _SPECIALTY_LABELS.get(specialty, specialty)
+            goal = r.get("goal", "")
+            success = r.get("success", False)
+            status_tag = "✓" if success else "✗"
+            output = _extract_subtask_output(r)
+            section = f"## 【{label}】{status_tag} {goal[:80]}\n{output}\n"
+            parts.append(section)
+    else:
+        # 无 results，退到 summary
+        summary = wf_result.get("summary", "")
+        if summary:
+            parts.append(summary + "\n")
+
+    return "\n".join(parts)
+
+
 def _build_response(merged: Dict, op_id: str, start: datetime) -> Dict[str, Any]:
     elapsed = (datetime.now() - start).total_seconds() * 1000
     # 原则五落地：强制内容过滤（双保险，即使process_request未过滤也会在此过滤）
@@ -437,7 +682,7 @@ def _build_response(merged: Dict, op_id: str, start: datetime) -> Dict[str, Any]
     filtered, warnings = content_filter.filter(response_text)
     if warnings and "filter_warnings" not in merged:
         merged["filter_warnings"] = warnings
-    return {
+    resp = {
         "success": not merged.get("blocked", False),
         "op_id": op_id,
         "response": filtered,  # 使用过滤后的文本
@@ -450,6 +695,12 @@ def _build_response(merged: Dict, op_id: str, start: datetime) -> Dict[str, Any]
         "elapsed_ms": round(elapsed, 2),
         "balance": round(ledger.balance(), 4),
     }
+    # 透传工作流自动触发的元信息（供前端识别工作流响应并展示审计轨迹）
+    if merged.get("llm_mode"):
+        resp["llm_mode"] = merged["llm_mode"]
+    if merged.get("workflow_result"):
+        resp["workflow_result"] = merged["workflow_result"]
+    return resp
 
 
 # ─── 路由 ────────────────────────────────────

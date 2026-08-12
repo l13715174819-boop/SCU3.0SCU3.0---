@@ -49,6 +49,11 @@ class MetacognitionLayer:
             "refunds": [],
             "plugin_traces": business_ctx.get("plugin_traces", []),
         }
+        # 透传工作流自动触发的元信息（供 _build_response 输出到前端）
+        if business_ctx.get("llm_mode"):
+            merged["llm_mode"] = business_ctx["llm_mode"]
+        if business_ctx.get("workflow_result"):
+            merged["workflow_result"] = business_ctx["workflow_result"]
 
         # 业务侧主动拦截（如插件blocked）→ 设置blocked
         if business_ctx.get("blocked"):

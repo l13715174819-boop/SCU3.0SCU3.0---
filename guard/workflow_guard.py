@@ -226,8 +226,11 @@ def run_with_cuf_audit(guard: CUFGuard, tool_guard: ToolGuard,
         }
 
     # ⑤ 附加审计轨迹到结果
+    # 守卫②通过即视为工作流审计成功，标记 success=True 供下游判断
+    # （execute_fn 返回的 dict 可能没有 success 键，如 quick_multi_agent）
     if isinstance(result, dict):
         result["cuf_traces"] = cuf_traces
         result["cuf_audited"] = True
+        result["success"] = True
         result["execution_time"] = time.time() - start_time
     return result

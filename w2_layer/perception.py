@@ -15,8 +15,16 @@ logger = logging.getLogger("SCU3.w2.perception")
 class PerceptionLayer:
     """感知层 — 输入解析与意图识别"""
 
-    def process(self, user_input: str, ctx: Dict[str, Any] = None) -> Dict[str, Any]:
-        """解析用户输入"""
+    def process(self, user_input: str, ctx: Dict[str, Any] = None,
+                history: list = None) -> Dict[str, Any]:
+        """解析用户输入
+
+        Args:
+            user_input: 用户输入文本
+            ctx: 上下文
+            history: 最近对话历史（List[{"role":"user/assistant","content":"..."}]）
+                     用于 LLM 语义推理时区分追问 vs 新话题
+        """
         ctx = ctx or {}
         # 防御None/非字符串输入
         if user_input is None:
@@ -26,7 +34,7 @@ class PerceptionLayer:
         text = user_input.strip()
         ctx["input"] = text
         ctx["perceived"] = text
-        ctx["intent"] = self._detect_intent(text)
+        ctx["intent"] = self._detect_intent(text, history or [])
         # 领域识别：web_search 意图时进一步识别所属领域（hotel/product/medical/general）
         # 用于驱动领域插件配置（关键词增强+源白名单+字段解析）
         ctx["domain"] = "general"
@@ -41,8 +49,8 @@ class PerceptionLayer:
         logger.info(f"感知层: intent={ctx['intent']}, domain={ctx.get('domain', 'general')}, input={text[:50]}")
         return ctx
 
-    def _detect_intent(self, text: str) -> str:
-        """意图识别（含插件市场触发意图）"""
+    def _detect_intent(self, text: str, history: list = None) -> str:
+        """意图识别（含插件市场触发意图、工作流自动触发）"""
         # 优先级最高：追问/修正意图检测（依赖对话历史，不触发独立搜索）
         # 解决多轮对话中代词式查询（"刚才/再详细/不是这个"）被误判为独立搜索的问题
         if re.search(
@@ -54,6 +62,13 @@ class PerceptionLayer:
             text, re.I
         ):
             return "followup"
+
+        # ══ 工作流自动触发（优先级仅次于followup）══
+        # 强信号词直接路由到对应预置工作流；宽松动词（"分析一下"等）默认走 research_report
+        # 注意：必须在 analytical 之前判断，否则"分析"类词会被 analytical 吞掉
+        wf_intent = self._detect_workflow_intent(text)
+        if wf_intent:
+            return wf_intent
 
         # 分析/批判类意图检测（优先于knowledge_query，引导深度分析）
         # 解决"分析潜在假设"等批判性查询被default prompt处理导致深度不足的问题
@@ -116,3 +131,172 @@ class PerceptionLayer:
         if re.search(r"搜索|搜一下|搜搜|查一下|查查|帮我查|search|google一下|百度一下|最新|最近|今日|今天.*新闻|近期|2024|2025|2026|现在是.*年|怎么样|是什么|是谁|多少钱|发生.*事|热点|热搜", text, re.I):
             return "web_search"
         return "conversation"
+
+    # ═══════════════════════════════════════════════════════════
+    #  工作流自动触发意图识别
+    # ═══════════════════════════════════════════════════════════
+    # 对话框输入 → 自动识别 → 路由到对应预置工作流
+    # 触发策略：
+    #   ① 强信号词：精确匹配工作流名称关键词，直接路由
+    #   ② 宽松动词："分析一下/研究一下/写一篇" + 主题词 → 默认 research_report
+    #   ③ 边界：纯动词无主题词不触发（如"分析一下"无后续内容），避免空跑
+    # 返回 "workflow:<preset_id>" 或 None
+
+    # 强信号词表（preset_id → 触发正则）
+    WORKFLOW_STRONG_SIGNALS = {
+        "research_report": r"深度研究|研究报告|全面调研|深度调研|专题研究|研究一下|调研一下|深入调研",
+        "code_solution": r"完整代码方案|代码方案|实现方案|技术方案|写个方案|给个方案|完整方案",
+        "decision_analysis": r"决策分析|帮我决策|帮我做决定|决策一下|决定一下|帮我选择|选择分析",
+        "content_creation": r"创作一篇|写一篇.{0,4}文章|写篇文章|创作内容|写一篇.{0,4}文案|写个文案",
+        "bug_investigation": r"排查bug|调试问题|排查问题|bug排查|调试bug|定位bug|排查一下",
+        "learning_path": r"学习路径|学习路线|系统学习|学习计划|学习规划|怎么学|学习指南",
+    }
+
+    # 宽松动词：+ 主题词（≥2个非动词字符）→ 默认 research_report
+    # 覆盖"分析一下XX"、"研究XX"、"写一下XX"等泛化表达
+    WORKFLOW_LOOSE_VERBS = r"分析一下|研究一下|调研一下|写一下|了解一下|梳理一下|梳理下|整理一下|整理下|探讨一下|讨论一下"
+
+    def _detect_workflow_intent(self, text: str, history: list = None) -> str:
+        """识别工作流触发意图，返回 'workflow:<preset_id>' 或 ''
+
+        三层触发策略：
+        ① 强信号词精确路由（零成本，零延迟）
+        ② 宽松动词 + 主题词 → research_report（零成本，零延迟）
+        ③ LLM 完整语义推理（正则未命中时兜底，支持纯主题输入如"Python异步编程的优势"）
+        """
+        text = text.strip()
+        if not text or len(text) < 4:
+            return ""
+
+        # ① 强信号词精确路由
+        for preset_id, pattern in self.WORKFLOW_STRONG_SIGNALS.items():
+            if re.search(pattern, text, re.I):
+                logger.info(f"工作流强信号触发: preset={preset_id}, text={text[:40]}")
+                return f"workflow:{preset_id}"
+
+        # ② 宽松动词 + 主题词 → research_report（最通用）
+        # 提取动词后的主题（去掉动词前缀和语气词），主题长度≥2才触发
+        m = re.search(rf"(?:{self.WORKFLOW_LOOSE_VERBS})(.+)", text, re.I)
+        if m:
+            topic = m.group(1).strip()
+            # 去除"的/了/吧/呢/啊"等语气词后的有效主题
+            topic = re.sub(r"^[的了吧呢啊哈]+", "", topic).strip()
+            if len(topic) >= 2:
+                logger.info(f"工作流宽松触发: preset=research_report, topic={topic[:30]}, text={text[:40]}")
+                return "workflow:research_report"
+
+        # ③ LLM 完整语义推理（正则未命中兜底）
+        # 覆盖纯主题输入（如"Python异步编程的优势"、"量子计算前景"）
+        # 上下文感知：传入历史，LLM 能区分追问 vs 新话题
+        llm_intent = self._detect_workflow_intent_llm(text, history or [])
+        if llm_intent:
+            return llm_intent
+
+        return ""
+
+    # ═══════════════════════════════════════════════════════════
+    #  LLM 完整语义推理触发（第三层兜底）
+    # ═══════════════════════════════════════════════════════════
+    # 与助手自身工作方式一致：每轮 LLM 推理意图，覆盖正则无法匹配的纯主题输入
+    # 上下文感知：传入最近对话历史，能区分"追问"和"新话题"
+    # 成本：单次轻量调用（max_tokens=200, temperature=0.1），约0.5-1s
+    # 降级：LLM 调用失败或返回不需要 → 返回 ""，走普通对话
+
+    # 可用预置工作流（供 LLM 选择）
+    AVAILABLE_PRESETS = ["research_report", "code_solution", "decision_analysis",
+                         "content_creation", "bug_investigation", "learning_path"]
+
+    def _detect_workflow_intent_llm(self, text: str, history: list) -> str:
+        """LLM 完整语义推理：判断是否需要工作流，返回 'workflow:<preset_id>' 或 ''
+
+        策略：
+        - 文本长度≥6 才调用（避免对短输入浪费 token）
+        - 传入最近3轮历史，LLM 能识别追问（"详细说说"）vs 新话题
+        - LLM 返回 JSON: {"need_workflow": bool, "preset": str, "topic": str}
+        - 失败降级：返回 ""，走普通对话
+        """
+        # 短文本不调用 LLM（"你好"、"谢谢"等）
+        if len(text) < 6:
+            return ""
+
+        # 构建系统提示词
+        system_prompt = (
+            "你是意图分类器。判断用户输入是否需要调用预置工作流进行深度多步处理。\n\n"
+            "可用工作流：\n"
+            "- research_report: 深度研究报告（需搜集资料+分析+撰写完整报告）\n"
+            "- code_solution: 完整代码方案（需调研+实现+审查）\n"
+            "- decision_analysis: 决策分析（需搜集信息+利弊分析+建议）\n"
+            "- content_creation: 内容创作（需素材+撰写+润色）\n"
+            "- bug_investigation: Bug排查（需搜索+定位+修复方案）\n"
+            "- learning_path: 学习路径规划（需资源+评估+计划）\n\n"
+            "判断标准：\n"
+            "✓ 需要：用户明确要求深度处理，或主题复杂需多步处理（如'Python异步编程的优势'需搜集+分析+撰写）\n"
+            "✗ 不需要：追问/修正（'详细说说'、'再深入'）、简单问答（'你好'、'Python是什么'）、"
+            "闲聊、单步可完成的任务\n\n"
+            "结合对话历史判断：若用户是在追问上文，返回 need_workflow=false\n\n"
+            "只返回JSON，不要其他文字：\n"
+            '{"need_workflow": true, "preset": "research_report", "topic": "用户主题"}\n'
+            '或 {"need_workflow": false, "preset": "", "topic": ""}'
+        )
+
+        # 构建历史上下文（最近3轮）
+        history_text = ""
+        if history:
+            recent = history[-6:]  # 最多3轮（6条消息）
+            lines = []
+            for msg in recent:
+                role = msg.get("role", "")
+                content = msg.get("content", "")[:100]
+                if role and content:
+                    label = "用户" if role == "user" else "助手"
+                    lines.append(f"{label}: {content}")
+            if lines:
+                history_text = "对话历史:\n" + "\n".join(lines) + "\n\n"
+
+        user_prompt = f"{history_text}当前输入: {text}\n\n请判断:"
+
+        try:
+            from m_layer.llm_client import get_client
+            client = get_client()
+            result = client.chat(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                temperature=0.1,      # 低温度保证稳定
+                max_tokens=200,       # 短输出
+            )
+
+            if result.get("error"):
+                logger.debug(f"LLM意图推理失败: {result['error']}")
+                return ""
+
+            content = result.get("content", "").strip()
+            if not content:
+                return ""
+
+            # 解析 JSON（LLM 可能返回带 ```json 包裹的格式）
+            import json
+            # 去除可能的 markdown 代码块包裹
+            if content.startswith("```"):
+                content = re.sub(r"^```(?:json)?\s*", "", content)
+                content = re.sub(r"\s*```$", "", content)
+
+            data = json.loads(content)
+
+            if not data.get("need_workflow", False):
+                logger.info(f"LLM意图推理: 不需要工作流, reason={data.get('topic', '')[:30]}")
+                return ""
+
+            preset = data.get("preset", "").strip()
+            if preset not in self.AVAILABLE_PRESETS:
+                logger.warning(f"LLM意图推理: 未知preset={preset}, 降级到research_report")
+                preset = "research_report"
+
+            logger.info(f"LLM意图推理触发: preset={preset}, text={text[:40]}")
+            return f"workflow:{preset}"
+
+        except json.JSONDecodeError as e:
+            logger.debug(f"LLM意图推理JSON解析失败: {e}, content={content[:100] if 'content' in dir() else ''}")
+            return ""
+        except Exception as e:
+            logger.debug(f"LLM意图推理异常（降级到普通对话）: {e}")
+            return ""
